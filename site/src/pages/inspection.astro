@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { base } from 'astro:config/client';
 
 const inspection = [
 	{
@@ -66,7 +67,7 @@ const inspection = [
 
 	<section class="inspection-cta">
 		<div><p class="eyebrow">Transparent by design</p><h2>See the score.<br />Choose your bike.</h2></div>
-		<a class="button-primary" href="/products/">Shop inspected bikes <span aria-hidden="true">↗</span></a>
+		<a class="button-primary" href={`${base}/products/`}>Shop inspected bikes <span aria-hidden="true">↗</span></a>
 	</section>
 </Layout>
 

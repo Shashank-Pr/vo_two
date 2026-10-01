@@ -1,6 +1,7 @@
 ---
 import ProductInventory from '../components/ProductInventory.astro';
 import Layout from '../layouts/Layout.astro';
+import { base } from 'astro:config/client';
 ---
 
 <Layout>
@@ -11,7 +12,7 @@ import Layout from '../layouts/Layout.astro';
 			<p class="lead">Quality pre-owned road and gravel bikes, carefully inspected, independently scored out of 100, and ready for their next rider.</p>
 			<div class="hero-actions">
 				<a class="button-primary" href="#inventory">Shop verified bikes <span aria-hidden="true">↓</span></a>
-				<a class="button-secondary" href="/inspection/">How we inspect <span aria-hidden="true">↗</span></a>
+				<a class="button-secondary" href={`${base}/inspection/`}>How we inspect <span aria-hidden="true">↗</span></a>
 			</div>
 		</div>
 		<div class="hero-stamp" aria-label="Every bike is inspected and scored">
@@ -28,7 +29,7 @@ import Layout from '../layouts/Layout.astro';
 				<p class="eyebrow">The current collection</p>
 				<h2 id="inventory-title">Pre-owned. <span>Proven.</span></h2>
 			</div>
-			<a class="text-link" href="/products/">View all bikes <span aria-hidden="true">↗</span></a>
+			<a class="text-link" href={`${base}/products/`}>View all bikes <span aria-hidden="true">↗</span></a>
 		</div>
 		<ProductInventory />
 	</section>
@@ -39,7 +40,7 @@ import Layout from '../layouts/Layout.astro';
 			<h2>Know the bike<br />before the <span>ride.</span></h2>
 		</div>
 		<p>Every listing includes a transparent 100-point inspection score, with condition notes across the parts that matter.</p>
-		<a class="button-primary" href="/inspection/">What we check <span aria-hidden="true">↗</span></a>
+		<a class="button-primary" href={`${base}/inspection/`}>What we check <span aria-hidden="true">↗</span></a>
 	</section>
 </Layout>
 

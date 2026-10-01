@@ -1,5 +1,6 @@
 ---
 import { bicycles, imageUrl } from '../data/bicycles';
+import { base } from 'astro:config/client';
 ---
 
 <div class="inventory-tools" aria-label="Filter bicycle inventory">
@@ -33,19 +34,19 @@ import { bicycles, imageUrl } from '../data/bicycles';
 <div class="bike-grid" id="bike-grid">
 	{bicycles.map((bike) => (
 		<article class="bike-card" data-name={`${bike.name} ${bike.category}`.toLowerCase()} data-category={bike.category} data-score={bike.score}>
-			<a class="bike-photo" href={`/products/${bike.slug}/`} aria-label={`View details for ${bike.name}`}>
+			<a class="bike-photo" href={`${base}/products/${bike.slug}/`} aria-label={`View details for ${bike.name}`}>
 				<img src={imageUrl(bike.image)} alt={bike.alt} loading="lazy" />
 				<span class="bike-year">{bike.year}</span>
 				<span class="verified-tag"><span aria-hidden="true">✓</span> INSPECTED</span>
 			</a>
 			<div class="bike-details">
 				<div class="bike-title-row">
-					<div><p class="bike-category">PRE-OWNED <span>·</span> {bike.category}</p><h3><a class="bike-title-link" href={`/products/${bike.slug}/`}>{bike.name}</a></h3></div>
+					<div><p class="bike-category">PRE-OWNED <span>·</span> {bike.category}</p><h3><a class="bike-title-link" href={`${base}/products/${bike.slug}/`}>{bike.name}</a></h3></div>
 					<div class="inspection-score" aria-label={`Inspection score ${bike.score} out of 100`}><strong>{bike.score}</strong><span>/100</span></div>
 				</div>
 				<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
 				<div class="bike-meta"><span>{bike.distance} ridden</span><strong>{bike.price}</strong></div>
-				<a class="details-link" href={`/products/${bike.slug}/`}>View bike details <span aria-hidden="true">↗</span></a>
+				<a class="details-link" href={`${base}/products/${bike.slug}/`}>View bike details <span aria-hidden="true">↗</span></a>
 				<details class="inspection-report">
 					<summary>Inspection breakdown</summary>
 					<ul>{bike.checks.map((check) => <li><span>{check.name}</span><strong>{check.score}<small>/{check.max}</small></strong></li>)}</ul>

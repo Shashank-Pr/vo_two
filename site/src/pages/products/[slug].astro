@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { bicycles, imageUrl } from '../../data/bicycles';
+import { base } from 'astro:config/client';
 
 export function getStaticPaths() {
 	return bicycles.map((bike) => ({
@@ -14,7 +15,7 @@ const { bike } = Astro.props;
 
 <Layout title={`${bike.name} | vo2bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by vo2bikes.`}>
 	<nav class="breadcrumbs" aria-label="Breadcrumb">
-		<a href="/">Home</a><span aria-hidden="true">/</span><a href="/products/">Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
+		<a href={`${base}/`}>Home</a><span aria-hidden="true">/</span><a href={`${base}/products/`}>Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
 	</nav>
 
 	<section class="product-layout">

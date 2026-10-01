@@ -9,6 +9,7 @@
 			description = 'Shop quality-checked pre-owned road and gravel bikes, each inspected and scored out of 100.',
 		} = Astro.props;
 		const currentPath = Astro.url.pathname;
+import { base } from 'astro:config/client';
 ---
 
 		<!doctype html>
@@ -27,23 +28,23 @@
 			<body>
 				<div class="site-shell">
 					<header class="site-header">
-						<a class="wordmark" href="/" aria-label="vo2bikes home">
+						<a class="wordmark" href={`${base}/`} aria-label="vo2bikes home">
 							<span class="wordmark-mark" aria-hidden="true">V<span>2</span></span>
 							<span class="wordmark-name">VO<sub>2</sub>Bikes<small>RIDE. VERIFIED</small></span>
 						</a>
 						<nav class="primary-nav" aria-label="Main navigation">
-							<a href="/" aria-current={currentPath === '/' ? 'page' : undefined}>Home</a>
-							<a href="/products/" aria-current={currentPath.startsWith('/products') ? 'page' : undefined}>Bikes</a>
-							<a href="/inspection/" aria-current={currentPath.startsWith('/inspection') ? 'page' : undefined}>What sets us apart</a>
-							<a href="/about/" aria-current={currentPath.startsWith('/about') ? 'page' : undefined}>About</a>
+							<a href={`${base}/`} aria-current={currentPath === '/' ? 'page' : undefined}>Home</a>
+							<a href={`${base}/products/`} aria-current={currentPath.startsWith('/products') ? 'page' : undefined}>Bikes</a>
+							<a href={`${base}/inspection/`} aria-current={currentPath.startsWith('/inspection') ? 'page' : undefined}>What sets us apart</a>
+							<a href={`${base}/about/`} aria-current={currentPath.startsWith('/about') ? 'page' : undefined}>About</a>
 						</nav>
-						<a class="header-cta" href="/products/">Shop verified bikes <span aria-hidden="true">↗</span></a>
+						<a class="header-cta" href={`${base}/products/`}>Shop verified bikes <span aria-hidden="true">↗</span></a>
 					</header>
 					<main>
 						<slot />
 					</main>
 					<footer class="site-footer">
-						<a class="footer-wordmark" href="/">VO<sub>2</sub>Bikes <span>/ RIDE. VERIFIED</span></a>
+						<a class="footer-wordmark" href={`${base}/`}>VO<sub>2</sub>Bikes <span>/ RIDE. VERIFIED</span></a>
 						<p>Better bikes. Better backed.</p>
 						<a href="mailto:hello@vo2bikes.example">hello@vo2bikes.example</a>
 					</footer>

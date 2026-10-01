@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { base } from 'astro:config/client';
 ---
 
 	<Layout title="About vo2bikes | Verified Pre-owned Bikes" description="Learn how vo2bikes selects and verifies pre-owned cycling bikes.">
@@ -12,7 +13,7 @@ import Layout from '../layouts/Layout.astro';
 			<p class="lead">Buying a pre-owned bike should feel like a confident choice, not a leap of faith.</p>
 			<p>vo2bikes selects quality cycling bikes, then checks each one against the same detailed inspection standard. The score, category results, and bike-specific notes travel with the listing.</p>
 			<p>We make the condition clear so you can compare bikes on their merits and choose the right one for your next ride.</p>
-			<a class="button-primary" href="/inspection/">Our inspection standard <span aria-hidden="true">↗</span></a>
+			<a class="button-primary" href={`${base}/inspection/`}>Our inspection standard <span aria-hidden="true">↗</span></a>
 		</div>
 	</section>
 	<section class="shop-facts" aria-label="vo2bikes standards">
