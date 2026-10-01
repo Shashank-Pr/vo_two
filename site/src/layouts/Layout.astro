@@ -1,0 +1,160 @@
+---
+		interface Props {
+			title?: string;
+			description?: string;
+		}
+
+		const {
+			title = 'vo2bikes | Verified Pre-owned Bikes',
+			description = 'Shop quality-checked pre-owned road and gravel bikes, each inspected and scored out of 100.',
+		} = Astro.props;
+		const currentPath = Astro.url.pathname;
+---
+
+		<!doctype html>
+		<html lang="en">
+			<head>
+				<meta charset="utf-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<meta name="description" content={description} />
+				<meta name="theme-color" content="#090d10" />
+				<meta name="generator" content={Astro.generator} />
+				<link rel="preconnect" href="https://fonts.googleapis.com" />
+				<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+				<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+				<title>{title}</title>
+			</head>
+			<body>
+				<div class="site-shell">
+					<header class="site-header">
+						<a class="wordmark" href="/" aria-label="vo2bikes home">
+							<span class="wordmark-mark" aria-hidden="true">V<span>2</span></span>
+							<span class="wordmark-name">VO<sub>2</sub>Bikes<small>RIDE. VERIFIED</small></span>
+						</a>
+						<nav class="primary-nav" aria-label="Main navigation">
+							<a href="/" aria-current={currentPath === '/' ? 'page' : undefined}>Home</a>
+							<a href="/products/" aria-current={currentPath.startsWith('/products') ? 'page' : undefined}>Bikes</a>
+							<a href="/inspection/" aria-current={currentPath.startsWith('/inspection') ? 'page' : undefined}>What sets us apart</a>
+							<a href="/about/" aria-current={currentPath.startsWith('/about') ? 'page' : undefined}>About</a>
+						</nav>
+						<a class="header-cta" href="/products/">Shop verified bikes <span aria-hidden="true">↗</span></a>
+					</header>
+					<main>
+						<slot />
+					</main>
+					<footer class="site-footer">
+						<a class="footer-wordmark" href="/">VO<sub>2</sub>Bikes <span>/ RIDE. VERIFIED</span></a>
+						<p>Better bikes. Better backed.</p>
+						<a href="mailto:hello@vo2bikes.example">hello@vo2bikes.example</a>
+					</footer>
+				</div>
+			</body>
+		</html>
+
+		<style is:global>
+			:root {
+				font-family: 'DM Sans', sans-serif;
+				color: #f1f7f8;
+				background: #090d10;
+				font-synthesis: none;
+				text-rendering: optimizeLegibility;
+				--ink: #090d10;
+				--panel: rgba(10, 15, 18, 0.94);
+				--paper: #f1f7f8;
+				--muted: #aab8bc;
+				--line: rgba(226, 242, 244, 0.18);
+				--signal: #83e5dc;
+			}
+			* { box-sizing: border-box; }
+			html { min-width: 320px; scroll-behavior: smooth; }
+			body {
+				margin: 0;
+				min-width: 320px;
+				min-height: 100vh;
+				background: #090d10 url('https://images.unsplash.com/photo-1609449806991-5bc618d84485?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDEzfHx8ZW58MHx8fHx8') center 42% / cover fixed no-repeat;
+			}
+			body::before {
+				content: '';
+				position: fixed;
+				inset: 0;
+				z-index: -1;
+				background: linear-gradient(90deg, rgba(5, 9, 12, 0.91), rgba(5, 9, 12, 0.75) 55%, rgba(5, 9, 12, 0.78)), linear-gradient(0deg, rgba(5, 9, 12, 0.63), transparent 55%);
+			}
+			a { color: inherit; }
+			button, input, select { font: inherit; }
+			button, a, select { -webkit-tap-highlight-color: transparent; }
+			.site-shell { min-height: 100vh; }
+			.site-header {
+				position: relative;
+				z-index: 2;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 2rem;
+				min-height: 88px;
+				padding: 0 clamp(1.25rem, 5vw, 5.5rem);
+				border-bottom: 1px solid var(--line);
+				background: rgba(8, 12, 15, 0.82);
+				backdrop-filter: blur(14px);
+			}
+			.wordmark { display: inline-flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+			.wordmark-mark {
+				display: grid;
+				place-items: center;
+				width: 43px;
+				aspect-ratio: 1;
+				border: 1px solid var(--signal);
+				color: var(--signal);
+				font-family: 'Barlow Condensed', sans-serif;
+				font-size: 1.25rem;
+				font-weight: 700;
+			}
+			.wordmark-mark span { color: var(--paper); }
+			.wordmark-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; line-height: 0.92; letter-spacing: 0.04em; }
+			.wordmark-name b { color: var(--signal); }
+			.wordmark-name small { display: block; margin-top: 0.45rem; color: var(--muted); font: 600 0.56rem 'DM Sans', sans-serif; letter-spacing: 0.18em; }
+			.primary-nav { display: flex; align-items: center; gap: clamp(1rem, 2.6vw, 2.7rem); }
+			.primary-nav a { position: relative; padding: 0.5rem 0; color: #d7e2e4; font-size: 0.78rem; font-weight: 600; text-decoration: none; transition: color 160ms ease; }
+			.primary-nav a::after { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: var(--signal); content: ''; transform: scaleX(0); transform-origin: left; transition: transform 160ms ease; }
+			.primary-nav a:hover, .primary-nav a[aria-current='page'] { color: var(--paper); }
+			.primary-nav a:hover::after, .primary-nav a[aria-current='page']::after { transform: scaleX(1); }
+			.header-cta, .button-primary {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 1rem;
+				min-height: 44px;
+				padding: 0.7rem 1rem;
+				border: 1px solid var(--signal);
+				background: var(--signal);
+				color: var(--ink);
+				font-size: 0.74rem;
+				font-weight: 700;
+				text-decoration: none;
+				transition: background 160ms ease, color 160ms ease;
+			}
+			.header-cta:hover, .button-primary:hover { background: transparent; color: var(--signal); }
+			.button-secondary { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--paper); font-size: 0.76rem; font-weight: 700; text-decoration-color: var(--signal); text-underline-offset: 5px; }
+			.eyebrow { display: flex; align-items: center; gap: 0.65rem; color: var(--signal); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+			.eyebrow::before { width: 25px; height: 1px; background: currentColor; content: ''; }
+			.display-heading { margin: 1rem 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(3.5rem, 8vw, 7.7rem); font-weight: 700; line-height: 0.86; text-transform: uppercase; }
+			.display-heading span { color: var(--signal); }
+			.lead { max-width: 570px; color: #d4e0e2; font-size: 1rem; line-height: 1.75; }
+			.site-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.75rem clamp(1.25rem, 5vw, 5.5rem); border-top: 1px solid var(--line); background: rgba(7, 10, 12, 0.9); color: var(--muted); font-size: 0.72rem; }
+			.site-footer p { margin: 0; }
+			.footer-wordmark { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; text-decoration: none; }
+			.footer-wordmark span { color: var(--muted); font: 600 0.58rem 'DM Sans', sans-serif; letter-spacing: 0.1em; }
+			.site-footer > a:last-child { text-decoration-color: var(--signal); text-underline-offset: 4px; }
+			@media (max-width: 760px) {
+				.site-header { flex-wrap: wrap; gap: 0.7rem 1rem; padding-top: 0.85rem; padding-bottom: 0.85rem; }
+				.wordmark { margin-right: auto; }
+				.primary-nav { order: 3; width: 100%; justify-content: space-between; gap: 0.5rem; }
+				.primary-nav a { font-size: 0.7rem; }
+				.header-cta { min-height: 38px; padding: 0.55rem 0.7rem; font-size: 0.68rem; }
+				.site-footer { flex-wrap: wrap; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				html { scroll-behavior: auto; }
+				*, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+			}
+		</style>

@@ -1,0 +1,100 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const inspection = [
+	{
+		area: 'Frame & fork',
+		points: 25,
+		checks: ['Surface condition, cracks, dents, and repair signs', 'Frame and fork alignment', 'Headset play, steerer, and bearing condition', 'Seatpost fit, threads, mounts, and hardware'],
+	},
+	{
+		area: 'Wheels & tyres',
+		points: 20,
+		checks: ['Rim condition and wheel trueness', 'Spoke tension and nipple condition', 'Hub rotation and bearing play', 'Tyre casing, tread, and tubeless setup'],
+	},
+	{
+		area: 'Drivetrain',
+		points: 20,
+		checks: ['Chain wear measurement', 'Cassette and chainring tooth wear', 'Gear changes across the full range', 'Derailleur hanger, crank, and bottom bracket'],
+	},
+	{
+		area: 'Braking',
+		points: 15,
+		checks: ['Pad thickness and remaining life', 'Rotor or rim braking surface', 'Hydraulic lines or cable condition', 'Lever return, alignment, and braking force'],
+	},
+	{
+		area: 'Cockpit & fit',
+		points: 10,
+		checks: ['Bar, stem, and seatpost security', 'Saddle rails and adjustment range', 'Torque-critical fasteners', 'Contact points and fit measurements'],
+	},
+	{
+		area: 'Ride test & records',
+		points: 10,
+		checks: ['Road test under load', 'Shifting, braking, handling, and unusual noise', 'Frame or serial number recorded', 'Included components and ownership details'],
+	},
+];
+---
+
+<Layout title="What Sets Us Apart | vo2bikes" description="See the checks behind every vo2bikes pre-owned bicycle inspection score.">
+	<section class="page-intro">
+		<p class="eyebrow">Our promise / one standard for every bike</p>
+		<h1 class="display-heading">Know what<br />you’re <span>buying.</span></h1>
+		<p class="lead">Every pre-owned bike is inspected before it reaches the showroom. We score six areas out of 100 and show the breakdown with the listing.</p>
+	</section>
+
+	<section class="score-summary" aria-label="Inspection score structure">
+		<div><strong>100</strong><span>total points</span></div>
+		<div><strong>6</strong><span>inspection areas</span></div>
+		<div><strong>1</strong><span>road test per bike</span></div>
+	</section>
+
+	<section class="inspection-section" id="checklist" aria-labelledby="checklist-title">
+		<div class="inspection-heading">
+			<div><p class="eyebrow">What we check</p><h2 id="checklist-title">The inspection <span>checklist.</span></h2></div>
+			<p>Each listing carries bike-specific readings and notes against these checks.</p>
+		</div>
+		<div class="inspection-grid">
+			{inspection.map((group, index) => (
+				<article class="inspection-card">
+					<header><span class="inspection-number">0{index + 1}</span><div><h3>{group.area}</h3><span class="weight">{group.points} points</span></div></header>
+					<ul>{group.checks.map((item) => <li><span class="check-mark" aria-hidden="true">✓</span><span class="check-copy">{item}<small>Bike report: [condition / measurement / notes]</small></span></li>)}</ul>
+				</article>
+			))}
+		</div>
+		<p class="score-note">Inspection notes are recorded for each individual bike. The score reflects its condition at the time it was checked.</p>
+	</section>
+
+	<section class="inspection-cta">
+		<div><p class="eyebrow">Transparent by design</p><h2>See the score.<br />Choose your bike.</h2></div>
+		<a class="button-primary" href="/products/">Shop inspected bikes <span aria-hidden="true">↗</span></a>
+	</section>
+</Layout>
+
+<style>
+	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; }
+	.page-intro .display-heading { font-size: clamp(3.8rem, 8vw, 6.5rem); }
+	.page-intro .lead { margin: 1.2rem 0 0; }
+	.score-summary { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin: 0 auto; padding: 1.5rem clamp(1.25rem, 7vw, 7rem); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(8, 12, 15, 0.92); }
+	.score-summary div { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.3rem 1rem; border-right: 1px solid var(--line); }
+	.score-summary div:last-child { border: 0; }
+	.score-summary strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
+	.score-summary span { color: var(--muted); font-size: 0.7rem; }
+	.inspection-section { padding: 4.5rem clamp(1.25rem, 7vw, 7rem); background: rgba(8, 12, 15, 0.96); }
+	.inspection-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 2rem; }
+	.inspection-heading h2, .inspection-cta h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.inspection-heading h2 span { color: var(--signal); }
+	.inspection-heading > p { max-width: 340px; margin: 0; color: #cfdddf; font-size: 0.8rem; line-height: 1.7; }
+	.inspection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; max-width: 1200px; margin: 0 auto; }
+	.inspection-card { padding: 1.4rem 0; border-top: 1px solid var(--line); }
+	.inspection-card header { display: flex; align-items: start; gap: 1rem; }
+	.inspection-number { padding-top: 0.15rem; color: var(--signal); font-size: 0.68rem; font-weight: 700; }
+	.inspection-card h3 { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; text-transform: uppercase; }
+	.weight { color: var(--muted); font-size: 0.65rem; }
+	.inspection-card ul { display: grid; gap: 0.7rem; margin: 1rem 0 0 2rem; padding: 0; list-style: none; }
+	.inspection-card li { display: flex; align-items: start; gap: 0.55rem; color: #d4e0e2; font-size: 0.73rem; line-height: 1.5; }
+	.check-mark { color: var(--signal); }
+	.check-copy small { display: block; margin-top: 0.15rem; color: var(--muted); font-size: 0.62rem; }
+	.score-note { max-width: 1200px; margin: 1.5rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
+	.inspection-cta { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3.5rem clamp(1.25rem, 10vw, 10rem); background: rgba(12, 17, 20, 0.96); }
+	@media (max-width: 700px) { .page-intro { padding-top: 3.5rem; } .score-summary { grid-template-columns: 1fr; gap: 0.5rem; } .score-summary div { border-right: 0; border-bottom: 1px solid var(--line); } .inspection-heading { align-items: start; flex-direction: column; gap: 0.8rem; } .inspection-grid { grid-template-columns: 1fr; } .inspection-cta { align-items: flex-start; flex-direction: column; } }
+</style>

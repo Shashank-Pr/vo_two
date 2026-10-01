@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+	<Layout title="About vo2bikes | Verified Pre-owned Bikes" description="Learn how vo2bikes selects and verifies pre-owned cycling bikes.">
+	<section class="about-hero">
+		<div>
+			<p class="eyebrow">Better bikes. Better backed.</p>
+			<h1 class="display-heading">Ride with<br />more <span>certainty.</span></h1>
+		</div>
+		<div class="about-copy">
+			<p class="lead">Buying a pre-owned bike should feel like a confident choice, not a leap of faith.</p>
+			<p>vo2bikes selects quality cycling bikes, then checks each one against the same detailed inspection standard. The score, category results, and bike-specific notes travel with the listing.</p>
+			<p>We make the condition clear so you can compare bikes on their merits and choose the right one for your next ride.</p>
+			<a class="button-primary" href="/inspection/">Our inspection standard <span aria-hidden="true">↗</span></a>
+		</div>
+	</section>
+	<section class="shop-facts" aria-label="vo2bikes standards">
+		<div><span>01 / EVERY LISTING</span><strong>Pre-owned only</strong></div>
+		<div><span>02 / SAME STANDARD</span><strong>100-point inspection</strong></div>
+		<div><span>03 / NO GUESSWORK</span><strong>Score shown upfront</strong></div>
+	</section>
+</Layout>
+
+<style>
+	.about-hero { display: grid; grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: clamp(2rem, 8vw, 8rem); min-height: 610px; max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem); }
+	.about-hero .display-heading { font-size: clamp(3.8rem, 8vw, 6.5rem); }
+	.about-hero .display-heading span { color: var(--signal); }
+	.about-copy { max-width: 520px; padding-top: 2rem; }
+	.about-copy .lead { margin: 0 0 1.4rem; color: var(--paper); font-size: 1.1rem; }
+	.about-copy > p:not(.lead) { color: #cfdddf; font-size: 0.83rem; line-height: 1.85; }
+	.about-copy .button-primary { margin-top: 1rem; }
+	.shop-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 2.25rem clamp(1.25rem, 10vw, 10rem); border-top: 1px solid var(--line); background: rgba(8, 12, 15, 0.94); }
+	.shop-facts div { display: grid; gap: 0.5rem; }
+	.shop-facts span { color: var(--signal); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; }
+	.shop-facts strong { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; }
+	@media (max-width: 760px) { .about-hero { grid-template-columns: 1fr; gap: 1rem; padding-top: 3.5rem; padding-bottom: 3rem; } .about-copy { padding-top: 0; } .shop-facts { grid-template-columns: 1fr; gap: 1.3rem; } }
+</style>

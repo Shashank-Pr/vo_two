@@ -1,0 +1,23 @@
+---
+import ProductInventory from '../components/ProductInventory.astro';
+import Layout from '../layouts/Layout.astro';
+---
+
+		<Layout title="Verified Pre-owned Bikes | vo2bikes" description="Browse quality-checked pre-owned bikes with a transparent inspection score on every listing.">
+	<section class="page-intro">
+			<p class="eyebrow">Pre-owned collection / inspected individually</p>
+			<h1 class="display-heading">Good bikes.<br /><span>Good to go.</span></h1>
+			<p class="lead">Every bike is pre-owned, checked against our 100-point standard, and listed with its score and condition breakdown.</p>
+	</section>
+	<section class="catalog" aria-label="Performance bicycle inventory">
+		<ProductInventory />
+	</section>
+</Layout>
+
+<style>
+	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 7vw, 7rem) 3rem; }
+	.page-intro .display-heading { font-size: clamp(3.8rem, 8vw, 6.5rem); }
+	.page-intro .lead { margin: 1.2rem 0 0; }
+	.catalog { padding: 0 clamp(1.25rem, 7vw, 7rem) 5rem; }
+	@media (max-width: 640px) { .page-intro { padding-top: 3.5rem; } .catalog { padding-right: 1.2rem; padding-left: 1.2rem; } }
+</style>

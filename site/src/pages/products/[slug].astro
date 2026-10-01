@@ -1,0 +1,130 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { bicycles, imageUrl } from '../../data/bicycles';
+
+export function getStaticPaths() {
+	return bicycles.map((bike) => ({
+		params: { slug: bike.slug },
+		props: { bike },
+	}));
+}
+
+const { bike } = Astro.props;
+---
+
+<Layout title={`${bike.name} | vo2bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by vo2bikes.`}>
+	<nav class="breadcrumbs" aria-label="Breadcrumb">
+		<a href="/">Home</a><span aria-hidden="true">/</span><a href="/products/">Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
+	</nav>
+
+	<section class="product-layout">
+		<section class="product-gallery" aria-label={`${bike.name} photos`}>
+			<figure class="gallery-main">
+				<img src={imageUrl(bike.gallery[0], 1500)} alt={`${bike.name}, primary product view`} fetchpriority="high" />
+				<figcaption>01 <span>/</span> 03</figcaption>
+			</figure>
+			<div class="gallery-secondary">
+				{bike.gallery.slice(1).map((image, index) => (
+					<figure>
+						<img src={imageUrl(image, 900)} alt={`${bike.name}, detail view ${index + 2}`} loading="lazy" />
+						<figcaption>0{index + 2} <span>/</span> 03</figcaption>
+					</figure>
+				))}
+			</div>
+		</section>
+
+		<aside class="product-summary">
+			<p class="eyebrow">{bike.year} / {bike.category} / verified pre-owned</p>
+			<h1 class="display-heading">{bike.name}</h1>
+			<p class="condition">{bike.condition}</p>
+			<p class="product-description">{bike.description}</p>
+			<div class="price-score">
+				<div><span>Asking price</span><strong>{bike.price}</strong></div>
+				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
+			</div>
+			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
+			<a class="button-primary enquiry-button" href={`mailto:hello@vo2bikes.example?subject=${encodeURIComponent(`Enquiry: ${bike.name}`)}`}>Enquire about this bike <span aria-hidden="true">↗</span></a>
+			<a class="inspection-link" href="#inspection">Read the full inspection <span aria-hidden="true">↓</span></a>
+		</aside>
+	</section>
+
+	<section class="spec-section" aria-labelledby="spec-title">
+		<div class="section-heading"><div><p class="eyebrow">Bike details</p><h2 id="spec-title">The <span>spec.</span></h2></div><p>{bike.specification}</p></div>
+		<dl class="spec-grid">
+			<div><dt>Frame</dt><dd>{bike.frame}</dd></div>
+			<div><dt>Groupset</dt><dd>{bike.groupset}</dd></div>
+			<div><dt>Wheels</dt><dd>{bike.wheels}</dd></div>
+			<div><dt>Size</dt><dd>{bike.size}</dd></div>
+			<div><dt>Distance ridden</dt><dd>{bike.distance}</dd></div>
+			<div><dt>Condition</dt><dd>{bike.condition}</dd></div>
+		</dl>
+	</section>
+
+	<section class="inspection-section" id="inspection" aria-labelledby="inspection-title">
+		<div class="section-heading">
+			<div><p class="eyebrow">Verified by vo2bikes</p><h2 id="inspection-title">Inspection <span>report.</span></h2></div>
+			<p>Each area is checked individually. The totals below make up this bike’s score.</p>
+		</div>
+		<div class="report-score"><strong>{bike.score}</strong><span>/ 100</span><i class="score-track"><i style={`width: ${bike.score}%`}></i></i></div>
+		<ul class="check-list">
+			{bike.checks.map((check) => (
+				<li><span class="check-name"><span aria-hidden="true">✓</span>{check.name}</span><span class="check-points">{check.score}<small> / {check.max}</small></span></li>
+			))}
+		</ul>
+		<p class="report-note">The score reflects this bike’s recorded condition at inspection. Bike-specific measurements and notes are available with the sale.</p>
+	</section>
+</Layout>
+
+<style>
+	.breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 1.2rem clamp(1.25rem, 5vw, 5.5rem); color: var(--muted); font-size: 0.66rem; }
+	.breadcrumbs a { color: var(--paper); text-decoration-color: var(--signal); text-underline-offset: 3px; }
+	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 4rem; }
+	.product-gallery { display: grid; grid-template-columns: 1.5fr 0.7fr; gap: 0.65rem; min-width: 0; }
+	.product-gallery figure { position: relative; min-width: 0; margin: 0; overflow: hidden; background: #151d20; }
+	.gallery-main { min-height: 520px; }
+	.gallery-main img, .gallery-secondary img { display: block; width: 100%; height: 100%; object-fit: cover; }
+	.gallery-secondary { display: grid; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
+	.gallery-secondary figure { min-height: 180px; }
+	.product-gallery figcaption { position: absolute; right: 0.7rem; bottom: 0.7rem; padding: 0.4rem 0.5rem; background: rgba(7, 13, 15, 0.8); color: var(--paper); font-size: 0.6rem; }
+	.product-gallery figcaption span { color: var(--signal); }
+	.product-summary { position: sticky; top: 1rem; padding: 1.2rem 0; }
+	.product-summary .eyebrow { flex-wrap: wrap; font-size: 0.59rem; }
+	.product-summary .display-heading { margin: 1.2rem 0 0.4rem; font-size: clamp(3rem, 5vw, 5.3rem); }
+	.condition { margin: 0.5rem 0 1.2rem; color: var(--signal); font-size: 0.7rem; font-weight: 600; }
+	.product-description { color: #cfdddf; font-size: 0.82rem; line-height: 1.8; }
+	.price-score { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+	.price-score div { display: grid; gap: 0.35rem; }
+	.price-score span { color: var(--muted); font-size: 0.62rem; }
+	.price-score strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
+	.price-score .score-summary { text-align: right; }
+	.score-summary strong { color: var(--signal); }
+	.score-summary small { margin-left: 0.15rem; color: var(--muted); font: 500 0.7rem 'DM Sans', sans-serif; }
+	.score-track { display: block; height: 4px; margin: 0.4rem 0 1.4rem; background: rgba(226, 242, 244, 0.14); }
+	.score-track > span { display: block; height: 100%; background: var(--signal); }
+	.enquiry-button { width: 100%; }
+	.inspection-link { display: block; margin-top: 1rem; color: var(--paper); font-size: 0.7rem; text-align: center; text-decoration-color: var(--signal); text-underline-offset: 4px; }
+	.inspection-link span { margin-left: 0.35rem; color: var(--signal); }
+	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); }
+	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 1.7rem; }
+	.section-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.section-heading h2 span { color: var(--signal); }
+	.section-heading > p { max-width: 360px; margin: 0; color: var(--muted); font-size: 0.75rem; line-height: 1.7; }
+	.spec-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 1200px; margin: 0 auto; border-top: 1px solid var(--line); }
+	.spec-grid div { padding: 1.2rem 1rem 1.2rem 0; border-bottom: 1px solid var(--line); }
+	.spec-grid dt { color: var(--muted); font-size: 0.63rem; }
+	.spec-grid dd { margin: 0.45rem 0 0; color: var(--paper); font-size: 0.82rem; }
+	.inspection-section { background: rgba(12, 17, 20, 0.98); }
+	.report-score { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 0.4rem; max-width: 1200px; margin: 0 auto; padding: 1rem 0; border-top: 1px solid var(--line); }
+	.report-score > strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 3.4rem; line-height: 1; }
+	.report-score > span { color: var(--muted); font-size: 0.7rem; }
+	.report-score .score-track { align-self: center; margin: 0 0 0 1rem; }
+	.check-list { max-width: 1200px; margin: 0 auto; padding: 0; list-style: none; }
+	.check-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-top: 1px solid var(--line); }
+	.check-name { display: flex; align-items: center; gap: 0.65rem; color: var(--paper); font-size: 0.8rem; }
+	.check-name > span { color: var(--signal); }
+	.check-points { color: var(--paper); font-weight: 700; }
+	.check-points small { color: var(--muted); font-size: 0.65rem; }
+	.report-note { max-width: 1200px; margin: 1.4rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
+	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; } .product-summary { position: static; } .gallery-main { min-height: 430px; } }
+	@media (max-width: 600px) { .product-gallery { grid-template-columns: 1fr; } .gallery-main { min-height: 350px; } .gallery-secondary { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 170px; } .product-layout { padding-right: 1rem; padding-left: 1rem; } .spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .section-heading { align-items: start; flex-direction: column; gap: 0.8rem; } }
+</style>
