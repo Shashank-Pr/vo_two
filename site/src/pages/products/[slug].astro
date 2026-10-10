@@ -1,9 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { bicycles, imageUrl } from '../../data/bicycles';
+import { getAvailableBicycles, urlFor } from '../../data/bicycles';
 import { base } from 'astro:config/client';
+import backdrop from '../../assets/backdrop.avif';
 
-export function getStaticPaths() {
+const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`;
+
+export async function getStaticPaths() {
+	const bicycles = await getAvailableBicycles();
 	return bicycles.map((bike) => ({
 		params: { slug: bike.slug },
 		props: { bike },
@@ -17,21 +21,33 @@ const { bike } = Astro.props;
 	<nav class="breadcrumbs" aria-label="Breadcrumb">
 		<a href={`${base}/`}>Home</a><span aria-hidden="true">/</span><a href={`${base}/products/`}>Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
 	</nav>
-
+	<style is:inline set:html={inlineStyles}></style>
 	<section class="product-layout">
 		<section class="product-gallery" aria-label={`${bike.name} photos`}>
-			<figure class="gallery-main">
-				<img src={imageUrl(bike.gallery[0], 1500)} alt={`${bike.name}, primary product view`} fetchpriority="high" />
-				<figcaption>01 <span>/</span> 03</figcaption>
-			</figure>
-			<div class="gallery-secondary">
-				{bike.gallery.slice(1).map((image, index) => (
-					<figure>
-						<img src={imageUrl(image, 900)} alt={`${bike.name}, detail view ${index + 2}`} loading="lazy" />
-						<figcaption>0{index + 2} <span>/</span> 03</figcaption>
-					</figure>
+			<div class="gallery-thumbs" aria-label={`${bike.name} photo thumbnails`}>
+				{bike.gallery.map((image, index) => (
+					<button
+						type="button"
+						class:list={['thumb', { 'is-active': index === 0 }]}
+						aria-label={`Show ${bike.name} photo ${index + 1}`}
+						aria-current={index === 0 ? 'true' : undefined}
+						data-index={index}
+						data-src={urlFor(image).width(1200).height(900).fit('crop').url()}
+						data-zoom={urlFor(image).width(2400).height(1800).fit('crop').url()}
+					>
+						<img src={urlFor(image).width(140).height(105).fit('crop').url()} alt="" loading="lazy" />
+					</button>
 				))}
 			</div>
+			<figure class="gallery-canvas">
+				<img
+					src={urlFor(bike.gallery[0]).width(1200).height(900).fit('crop').url()}
+					alt={`${bike.name}, primary product view`}
+					fetchpriority="high"
+				/>
+				<div class="magnifier" aria-hidden="true"></div>
+				<figcaption class="gallery-count">01 / 03</figcaption>
+			</figure>
 		</section>
 
 		<aside class="product-summary">
@@ -40,11 +56,11 @@ const { bike } = Astro.props;
 			<p class="condition">{bike.condition}</p>
 			<p class="product-description">{bike.description}</p>
 			<div class="price-score">
-				<div><span>Asking price</span><strong>{bike.price}</strong></div>
+				<div><span>Asking price</span><strong>{bike.priceLabel}</strong></div>
 				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
 			</div>
 			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
-			<a class="button-primary enquiry-button" href={`mailto:hello@vo2bikes.example?subject=${encodeURIComponent(`Enquiry: ${bike.name}`)}`}>Enquire about this bike <span aria-hidden="true">↗</span></a>
+			<a class="button-primary enquiry-button" href={`mailto:vo2bikes.official@gmail.com?subject=${encodeURIComponent(`Enquiry: ${bike.name}`)}`}>Enquire about this bike <span aria-hidden="true">↗</span></a>
 			<a class="inspection-link" href="#inspection">Read the full inspection <span aria-hidden="true">↓</span></a>
 		</aside>
 	</section>
@@ -74,19 +90,87 @@ const { bike } = Astro.props;
 		</ul>
 		<p class="report-note">The score reflects this bike’s recorded condition at inspection. Bike-specific measurements and notes are available with the sale.</p>
 	</section>
+
+	<script>
+		const gallery = document.querySelector('.product-gallery');
+		if (gallery) {
+			const canvas = gallery.querySelector('.gallery-canvas');
+			const lens = gallery.querySelector('.magnifier');
+			const mainImage = canvas && canvas.querySelector('img');
+			const countEl = gallery.querySelector('.gallery-count');
+			const thumbs = [...gallery.querySelectorAll('.thumb')];
+			const ZOOM = 2;
+
+			const pad = (n) => String(n).padStart(2, '0');
+
+			const activate = (thumb) => {
+				thumbs.forEach((t) => {
+					const active = t === thumb;
+					t.classList.toggle('is-active', active);
+					if (active) t.setAttribute('aria-current', 'true');
+					else t.removeAttribute('aria-current');
+				});
+				mainImage.src = thumb.dataset.src;
+				lens.style.backgroundImage = `url('${thumb.dataset.zoom}')`;
+				countEl.textContent = `${pad(Number(thumb.dataset.index) + 1)} / ${pad(thumbs.length)}`;
+			};
+
+			const lensHalf = Math.round(lens.offsetWidth / 2);
+
+			const setLens = (x, y, width, height) => {
+				x = Math.min(Math.max(x, 0), width);
+				y = Math.min(Math.max(y, 0), height);
+				lens.style.left = `${x}px`;
+				lens.style.top = `${y}px`;
+				lens.style.backgroundSize = `${width * ZOOM}px ${height * ZOOM}px`;
+				lens.style.backgroundPosition = `${-(x * ZOOM) + lensHalf}px ${-(y * ZOOM) + lensHalf}px`;
+			};
+
+			const onMove = (event) => {
+				if (!lens.classList.contains('is-on')) return;
+				const rect = canvas.getBoundingClientRect();
+				setLens(event.clientX - rect.left, event.clientY - rect.top, rect.width, rect.height);
+			};
+
+			thumbs.forEach((thumb) => {
+				thumb.addEventListener('mouseenter', () => activate(thumb));
+				thumb.addEventListener('click', () => activate(thumb));
+			});
+
+			canvas.addEventListener('mouseenter', (event) => {
+				lens.classList.add('is-on');
+				canvas.classList.add('is-magnifying');
+				onMove(event);
+			});
+			canvas.addEventListener('mousemove', onMove);
+			canvas.addEventListener('mouseleave', () => {
+				lens.classList.remove('is-on');
+				canvas.classList.remove('is-magnifying');
+			});
+
+			activate(thumbs[0]);
+		}
+	</script>
 </Layout>
 
 <style>
 	.breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 1.2rem clamp(1.25rem, 5vw, 5.5rem); color: var(--muted); font-size: 0.66rem; }
 	.breadcrumbs a { color: var(--paper); text-decoration-color: var(--signal); text-underline-offset: 3px; }
 	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 4rem; }
-	.product-gallery { display: grid; grid-template-columns: 1.5fr 0.7fr; gap: 0.65rem; min-width: 0; }
-	.product-gallery figure { position: relative; min-width: 0; margin: 0; overflow: hidden; background: #151d20; }
-	.gallery-main { min-height: 520px; }
-	.gallery-main img, .gallery-secondary img { display: block; width: 100%; height: 100%; object-fit: cover; }
-	.gallery-secondary { display: grid; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
-	.gallery-secondary figure { min-height: 180px; }
-	.product-gallery figcaption { position: absolute; right: 0.7rem; bottom: 0.7rem; padding: 0.4rem 0.5rem; background: rgba(7, 13, 15, 0.8); color: var(--paper); font-size: 0.6rem; }
+	.product-gallery { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 0.6rem; align-items: start; min-width: 0; }
+	.gallery-thumbs { display: flex; flex-direction: column; gap: 0.6rem; }
+	.thumb { display: block; width: 100%; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
+	.thumb:hover { border-color: var(--muted); }
+	.thumb.is-active, .thumb:focus-visible { outline: none; border-color: var(--signal); }
+	.thumb:not(.is-active) { opacity: 0.78; }
+	.thumb:not(.is-active):hover { opacity: 1; }
+	.thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+	.gallery-canvas { position: relative; margin: 0; overflow: hidden; background: #151d20; aspect-ratio: 4 / 3; cursor: crosshair; }
+	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: cover; }
+	.gallery-canvas.is-magnifying { cursor: none; }
+	.magnifier { position: absolute; left: 0; top: 0; width: clamp(120px, 24vw, 190px); aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(241, 247, 248, 0.95); box-shadow: 0 0 0 1px rgba(9, 13, 16, 0.7), 0 6px 24px rgba(0, 0, 0, 0.55); background-repeat: no-repeat; pointer-events: none; opacity: 0; transform: translate(-50%, -50%); transition: opacity 120ms ease; z-index: 2; }
+	.magnifier.is-on { opacity: 1; }
+	.product-gallery figcaption { position: absolute; right: 0.7rem; bottom: 0.7rem; padding: 0.4rem 0.5rem; background: rgba(7, 13, 15, 0.8); color: var(--paper); font-size: 0.6rem; z-index: 3; }
 	.product-gallery figcaption span { color: var(--signal); }
 	.product-summary { position: sticky; top: 1rem; padding: 1.2rem 0; }
 	.product-summary .eyebrow { flex-wrap: wrap; font-size: 0.59rem; }
@@ -126,6 +210,6 @@ const { bike } = Astro.props;
 	.check-points { color: var(--paper); font-weight: 700; }
 	.check-points small { color: var(--muted); font-size: 0.65rem; }
 	.report-note { max-width: 1200px; margin: 1.4rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
-	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; } .product-summary { position: static; } .gallery-main { min-height: 430px; } }
-	@media (max-width: 600px) { .product-gallery { grid-template-columns: 1fr; } .gallery-main { min-height: 350px; } .gallery-secondary { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 170px; } .product-layout { padding-right: 1rem; padding-left: 1rem; } .spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .section-heading { align-items: start; flex-direction: column; gap: 0.8rem; } }
+	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; } .product-summary { position: static; } }
+	@media (max-width: 600px) { .product-gallery { grid-template-columns: 1fr; } .gallery-thumbs { flex-direction: row; } .thumb { flex: 1; } .product-layout { padding-right: 1rem; padding-left: 1rem; } .spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .section-heading { align-items: start; flex-direction: column; gap: 0.8rem; } }
 </style>

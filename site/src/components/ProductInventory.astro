@@ -1,6 +1,8 @@
 ---
-import { bicycles, imageUrl } from '../data/bicycles';
+import { getAvailableBicycles, urlFor } from '../data/bicycles';
 import { base } from 'astro:config/client';
+
+const bicycles = await getAvailableBicycles();
 ---
 
 <div class="inventory-tools" aria-label="Filter bicycle inventory">
@@ -28,14 +30,14 @@ import { base } from 'astro:config/client';
 			<option value="95">95 and above</option>
 		</select>
 	</label>
-	<p class="result-count" aria-live="polite"><span id="bike-count">6</span> verified bikes</p>
+	<p class="result-count" aria-live="polite"><span id="bike-count">{bicycles.length}</span> verified bikes</p>
 </div>
 
 <div class="bike-grid" id="bike-grid">
 	{bicycles.map((bike) => (
 		<article class="bike-card" data-name={`${bike.name} ${bike.category}`.toLowerCase()} data-category={bike.category} data-score={bike.score}>
 			<a class="bike-photo" href={`${base}/products/${bike.slug}/`} aria-label={`View details for ${bike.name}`}>
-				<img src={imageUrl(bike.image)} alt={bike.alt} loading="lazy" />
+				<img src={urlFor(bike.image).width(900).height(700).fit('crop').url()} alt={bike.alt} loading="lazy" />
 				<span class="bike-year">{bike.year}</span>
 				<span class="verified-tag"><span aria-hidden="true">✓</span> INSPECTED</span>
 			</a>
@@ -45,13 +47,13 @@ import { base } from 'astro:config/client';
 					<div class="inspection-score" aria-label={`Inspection score ${bike.score} out of 100`}><strong>{bike.score}</strong><span>/100</span></div>
 				</div>
 				<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
-				<div class="bike-meta"><span>{bike.distance} ridden</span><strong>{bike.price}</strong></div>
+				<div class="bike-meta"><span>{bike.distance} ridden</span><strong>{bike.priceLabel}</strong></div>
 				<a class="details-link" href={`${base}/products/${bike.slug}/`}>View bike details <span aria-hidden="true">↗</span></a>
 				<details class="inspection-report">
 					<summary>Inspection breakdown</summary>
 					<ul>{bike.checks.map((check) => <li><span>{check.name}</span><strong>{check.score}<small>/{check.max}</small></strong></li>)}</ul>
 				</details>
-				<a class="enquire-link" href={`mailto:hello@vo2bikes.example?subject=${encodeURIComponent(`Enquiry: ${bike.name}`)}`}>Ask about this bike <span aria-hidden="true">↗</span></a>
+				<a class="enquire-link" href={`mailto:vo2bikes.official@gmail.com?subject=${encodeURIComponent(`Enquiry: ${bike.name}`)}`}>Ask about this bike <span aria-hidden="true">↗</span></a>
 			</div>
 		</article>
 	))}

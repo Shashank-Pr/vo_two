@@ -10,7 +10,10 @@
 		} = Astro.props;
 		const currentPath = Astro.url.pathname;
 import { base } from 'astro:config/client';
-import Logo from '../assets/logo.jpeg'; 
+import Logo from '../assets/logo.jpeg';
+import backdrop from '../assets/backdrop-giant.jpg';
+
+const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`; 
 ---
 
 		<!doctype html>
@@ -24,13 +27,14 @@ import Logo from '../assets/logo.jpeg';
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 				<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+				<style is:inline set:html={bodyBackground}></style>
 				<title>{title}</title>
 			</head>
 			<body>
 				<div class="site-shell">
 					<header class="site-header">
 						<a class="wordmark" href={`${base}/`} aria-label="vo2bikes home">
-							<img class="wordmark-mark" aria-hidden="true" src={Logo.src}>
+							<img class="wordmark-mark" aria-hidden="true" src={`${base}${Logo.src}`}>
 							<span class="wordmark-name">VO<sub>2</sub>Bikes<small>RIDE. VERIFIED</small></span>
 						</a>
 						<nav class="primary-nav" aria-label="Main navigation">
@@ -47,7 +51,7 @@ import Logo from '../assets/logo.jpeg';
 					<footer class="site-footer">
 						<a class="footer-wordmark" href={`${base}/`}>VO<sub>2</sub>Bikes <span>/ RIDE. VERIFIED</span></a>
 						<p>Better bikes. Better backed.</p>
-						<a href="mailto:hello@vo2bikes.example">hello@vo2bikes.example</a>
+						<a href="mailto:vo2bikes.official@gmail.com">vo2bikes.official@gmail.com</a>
 					</footer>
 				</div>
 			</body>
@@ -73,7 +77,6 @@ import Logo from '../assets/logo.jpeg';
 				margin: 0;
 				min-width: 320px;
 				min-height: 100vh;
-				background: #090d10 url('https://images2.giant-bicycles.com/b_white%2Cc_pad%2Cq_80/mjurjaqotetftj4h1x6h/Reign-Eplus-E-bike-slides.jpg') center 42% / cover fixed no-repeat;
 			}
 			body::before {
 				content: '';
@@ -112,7 +115,7 @@ import Logo from '../assets/logo.jpeg';
 				font-weight: 700;
 			}
 			.wordmark-mark span { color: var(--paper); }
-			.wordmark-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; line-height: 0.92; letter-spacing: 0.04em; }
+			.wordmark-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; line-height: 0.92; letter-spacing: 0.14em; /* ~2.7px — tracking tuned so VO2Bikes is the same width as the RIDE. VERIFIED tagline below */ }
 			.wordmark-name b { color: var(--signal); }
 			.wordmark-name small { display: block; margin-top: 0.45rem; color: var(--muted); font: 600 0.56rem 'DM Sans', sans-serif; letter-spacing: 0.18em; }
 			.primary-nav { display: flex; align-items: center; gap: clamp(1rem, 2.6vw, 2.7rem); }

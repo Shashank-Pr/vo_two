@@ -1,9 +1,15 @@
 ---
 import ProductInventory from '../components/ProductInventory.astro';
 import Layout from '../layouts/Layout.astro';
+import backdrop from '../assets/backdrop.avif';
+
+const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`;
+
 ---
 
 		<Layout title="Verified Pre-owned Bikes | vo2bikes" description="Browse quality-checked pre-owned bikes with a transparent inspection score on every listing.">
+		<style is:inline set:html={inlineStyles}></style>
+
 	<section class="page-intro">
 			<p class="eyebrow">Pre-owned collection / inspected individually</p>
 			<h1 class="display-heading">Good bikes.<br /><span>Good to go.</span></h1>

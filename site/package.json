@@ -12,7 +12,10 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.3.5"
+    "@sanity/astro": "^3.5.1",
+    "@sanity/image-url": "^2.1.1",
+    "astro": "^7.3.5",
+    "groq": "^6.18.0"
   },
   "allowScripts": {
     "esbuild": true
