@@ -7,17 +7,53 @@ const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 4
 
 ---
 
-		<Layout title="Verified Pre-owned Bikes | vo2bikes" description="Browse quality-checked pre-owned bikes with a transparent inspection score on every listing.">
+		<Layout title="Verified Pre-owned Bikes | VO2 Bikes" description="Browse quality-checked pre-owned bikes with a transparent inspection score on every listing.">
 		<style is:inline set:html={inlineStyles}></style>
 
 	<section class="page-intro">
 			<p class="eyebrow">Pre-owned collection / inspected individually</p>
-			<h1 class="display-heading">Good bikes.<br /><span>Good to go.</span></h1>
+			<h1 class="display-heading">Good <span>bikes.</span><br />Good to <span>go.</span></h1>
 			<p class="lead">Every bike is pre-owned, checked against our 100-point standard, and listed with its score and condition breakdown.</p>
 	</section>
 	<section class="catalog" aria-label="Performance bicycle inventory">
 		<ProductInventory />
 	</section>
+
+	<script>
+		const SCROLL_KEY = 'vo2:products-scroll';
+		history.scrollRestoration = 'manual';
+
+		// Remember the listing position whenever we leave this page — this fires
+		// even when the browser caches the page (bfcache).
+		window.addEventListener('pagehide', () => {
+			sessionStorage.setItem(SCROLL_KEY, String(window.scrollY || 0));
+		});
+
+		const isBackForward = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
+
+		window.addEventListener('pageshow', (event) => {
+			// Only restore when arriving via the browser's back/forward (covers
+			// both bfcache restores and fresh back-navigation reloads).
+			const returning = event.persisted || isBackForward;
+			if (!returning) {
+				sessionStorage.removeItem(SCROLL_KEY);
+				return;
+			}
+			const saved = Number(sessionStorage.getItem(SCROLL_KEY));
+			sessionStorage.removeItem(SCROLL_KEY);
+			if (!Number.isFinite(saved) || saved <= 0) return;
+
+			// Re-apply across a few frames so nothing (late images, font swap)
+			// nudges the document height after the first scroll.
+			let attempt = 0;
+			const apply = () => {
+				window.scrollTo(0, saved);
+				attempt += 1;
+				if (attempt < 8) requestAnimationFrame(apply);
+			};
+			requestAnimationFrame(apply);
+		});
+	</script>
 </Layout>
 
 <style>

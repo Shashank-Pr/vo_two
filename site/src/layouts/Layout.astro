@@ -5,12 +5,12 @@
 		}
 
 		const {
-			title = 'vo2bikes | Verified Pre-owned Bikes',
+			title = 'VO2 Bikes | Verified Pre-owned Bikes',
 			description = 'Shop quality-checked pre-owned road and gravel bikes, each inspected and scored out of 100.',
 		} = Astro.props;
 		const currentPath = Astro.url.pathname;
 import { base } from 'astro:config/client';
-import Logo from '../assets/logo.jpeg';
+import Logo from '../assets/logo_combined.jpeg';
 import backdrop from '../assets/backdrop-giant.jpg';
 
 const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`; 
@@ -35,13 +35,12 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 					<header class="site-header">
 						<a class="wordmark" href={`${base}/`} aria-label="vo2bikes home">
 							<img class="wordmark-mark" aria-hidden="true" src={`${Logo.src}`}>
-							<span class="wordmark-name">VO<sub>2</sub>Bikes<small>RIDE. VERIFIED</small></span>
 						</a>
 						<nav class="primary-nav" aria-label="Main navigation">
-							<a href={`${base}/`} aria-current={currentPath === '/' ? 'page' : undefined}>Home</a>
-							<a href={`${base}/products/`} aria-current={currentPath.startsWith('/products') ? 'page' : undefined}>Bikes</a>
-							<a href={`${base}/inspection/`} aria-current={currentPath.startsWith('/inspection') ? 'page' : undefined}>Inspection</a>
-							<a href={`${base}/about/`} aria-current={currentPath.startsWith('/about') ? 'page' : undefined}>About</a>
+							<a href={`${base}/`} aria-current={currentPath === `${base}/` ? 'page' : undefined}>HOME</a>
+							<a href={`${base}/products/`} aria-current={currentPath.startsWith(`${base}/products/`) ? 'page' : undefined}>BIKES</a>
+							<a href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
+							<a href={`${base}/about/`} aria-current={currentPath.startsWith(`${base}/about/`) ? 'page' : undefined}>ABOUT</a>
 						</nav>
 						<a class="header-cta" href={`${base}/products/`}>Shop verified bikes <span aria-hidden="true">↗</span></a>
 					</header>
@@ -49,7 +48,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 						<slot />
 					</main>
 					<footer class="site-footer">
-						<a class="footer-wordmark" href={`${base}/`}>VO<sub>2</sub>Bikes <span>/ RIDE. VERIFIED</span></a>
+						<a class="footer-wordmark" href={`${base}/`}>VO<sub>2</sub> Bikes <span>/ RIDE. VERIFIED</span></a>
 						<p>Better bikes. Better backed.</p>
 						<a href="mailto:vo2bikes.official@gmail.com">vo2bikes.official@gmail.com</a>
 					</footer>
@@ -106,18 +105,20 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			.wordmark-mark {
 				display: grid;
 				place-items: center;
-				width: 43px;
+				width: 130px;
+				height: 43px;
 				aspect-ratio: 1;
-				border: 1px solid var(--signal);
+				/* border: 1px solid var(--signal); */
 				color: var(--signal);
 				font-family: 'Barlow Condensed', sans-serif;
 				font-size: 1.25rem;
 				font-weight: 700;
 			}
 			.wordmark-mark span { color: var(--paper); }
-			.wordmark-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; line-height: 0.92; letter-spacing: 0.14em; /* ~2.7px — tracking tuned so VO2Bikes is the same width as the RIDE. VERIFIED tagline below */ }
+			.wordmark-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.75rem; font-weight: 700; line-height: 1.05; letter-spacing: 0.04em;  }
+			.wordmark-name sub { font-size: 0.9em; vertical-align: -0.2em; }
 			.wordmark-name b { color: var(--signal); }
-			.wordmark-name small { display: block; margin-top: 0.45rem; color: var(--muted); font: 600 0.56rem 'DM Sans', sans-serif; letter-spacing: 0.18em; }
+			.wordmark-name small { display: block;  font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.8rem; /* monospace math: 7.75 units wide × 1.2rem ÷ 14 tag chars — makes both lines equal width so their right edges align */ letter-spacing: 0; }
 			.primary-nav { display: flex; align-items: center; gap: clamp(1rem, 2.6vw, 2.7rem); }
 			.primary-nav a { position: relative; padding: 0.5rem 0; color: #d7e2e4; font-size: 0.78rem; font-weight: 600; text-decoration: none; transition: color 160ms ease; }
 			.primary-nav a::after { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: var(--signal); content: ''; transform: scaleX(0); transform-origin: left; transition: transform 160ms ease; }

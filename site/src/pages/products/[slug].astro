@@ -17,7 +17,7 @@ export async function getStaticPaths() {
 const { bike } = Astro.props;
 ---
 
-<Layout title={`${bike.name} | vo2bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by vo2bikes.`}>
+<Layout title={`${bike.name} | VO2 Bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by VO2 Bikes.`}>
 	<nav class="breadcrumbs" aria-label="Breadcrumb">
 		<a href={`${base}/`}>Home</a><span aria-hidden="true">/</span><a href={`${base}/products/`}>Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
 	</nav>
