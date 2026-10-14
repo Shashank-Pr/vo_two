@@ -1,13 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getAvailableBicycles, urlFor } from '../../data/bicycles';
+import { getBicycles, urlFor } from '../../data/bicycles';
 import { base } from 'astro:config/client';
 import backdrop from '../../assets/backdrop.avif';
 
 const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`;
 
 export async function getStaticPaths() {
-	const bicycles = await getAvailableBicycles();
+	const bicycles = await getBicycles();
 	return bicycles.map((bike) => ({
 		params: { slug: bike.slug },
 		props: { bike },

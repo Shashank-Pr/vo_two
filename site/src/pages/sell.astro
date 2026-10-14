@@ -1,0 +1,227 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const sellEmail = 'vo2bikes.official@gmail.com';
+const currentYear = new Date().getFullYear();
+const maxYear = currentYear + 1;
+
+const steps = [
+	{ index: '01 / SHARE', label: 'Share your bike details and photos' },
+	{ index: '02 / REVIEW', label: 'Receive an initial review' },
+	{ index: '03 / DISCUSS', label: 'Discuss inspection, condition and pricing' },
+];
+
+const photoChecklist = [
+	'Full bike, both sides',
+	'Drivetrain (chain, cassette, crankset)',
+	'Frame and fork close-ups',
+	'Wheels and tyres',
+	'Any visible damage or wear',
+];
+---
+
+<Layout title="Sell Your Bike | VO2 Bikes" description="Sell your well-kept pre-owned road or gravel bike to VO2 Bikes. Share your bike details and photos for an initial review.">
+	<section class="page-intro">
+		<p class="eyebrow">Sell / We're always buying</p>
+		<h1 class="display-heading">Ready for your<br />next <span>upgrade?</span></h1>
+		<p class="lead">Your current bike could be someone else's next great ride. At VO<sub>2</sub> Bikes, we're always looking for well-maintained bicycles to add to our pre-owned collection. Tell us about your bike, share a few photos, and our team will review the details.</p>
+	</section>
+
+	<section class="sell-steps" aria-label="How selling works">
+		{steps.map((step) => (
+			<div><span>{step.index}</span><strong>{step.label}</strong></div>
+		))}
+	</section>
+
+	<section class="sell-section" id="sell-form-section" aria-labelledby="sell-form-title">
+		<div class="sell-inner">
+			<div class="sell-heading">
+				<div>
+					<p class="eyebrow">Tell us about your bike</p>
+					<h2 id="sell-form-title">Share your bike<br />details and <span>photos.</span></h2>
+				</div>
+				<p>Only what we need to assess your bike — no account, no listing fee. The more detail you share, the faster our team can review it and reply over WhatsApp or email.</p>
+			</div>
+
+			<form class="sell-form" id="sell-form">
+				<div class="field">
+					<label for="seller-name">Your name</label>
+					<input id="seller-name" name="name" type="text" autocomplete="name" placeholder="Full name" required />
+				</div>
+
+				<div class="field">
+					<label for="seller-phone">WhatsApp / mobile number</label>
+					<input id="seller-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="e.g. +91 98765 43210" required />
+				</div>
+
+				<div class="field full">
+					<label for="seller-bike">Bike brand and model</label>
+					<input id="seller-bike" name="bike" type="text" placeholder="e.g. Trek Émonda ALR 5" required />
+				</div>
+
+				<div class="field">
+					<label for="seller-year">Approximate purchase year</label>
+					<input id="seller-year" name="year" type="number" min="1970" max={maxYear} inputmode="numeric" placeholder="e.g. 2021" required />
+				</div>
+
+				<div class="field">
+					<label for="seller-bill">Original purchase bill available?</label>
+					<select id="seller-bill" name="bill" required>
+						<option value="" disabled selected>Select an option</option>
+						<option value="Yes">Yes</option>
+						<option value="No">No</option>
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="seller-price">Expected selling price (₹)</label>
+					<input id="seller-price" name="price" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 45000" required />
+				</div>
+
+				<div class="field">
+					<label for="seller-location">Location</label>
+					<input id="seller-location" name="location" type="text" placeholder="City / area" required />
+				</div>
+
+				<div class="field full">
+					<label for="seller-condition">Bike condition and known issues</label>
+					<textarea id="seller-condition" name="condition" rows="5" placeholder="Describe the overall condition, servicing history, any crashes, replaced parts or known issues." required></textarea>
+				</div>
+
+				<div class="field full">
+					<div class="photo-checklist">
+						<span>Photos to attach</span>
+						<ul>
+							{photoChecklist.map((shot) => (
+								<li><span class="check-mark" aria-hidden="true">✓</span><span>{shot}</span></li>
+							))}
+						</ul>
+						<small>Attach these to the email we prepare for you. Clear, well-lit photos help us review your bike faster.</small>
+					</div>
+				</div>
+
+				<div class="sell-submit">
+					<button class="button-primary" type="submit">Submit Your Bike Details <span aria-hidden="true">↗</span></button>
+					<p class="submit-note">This opens your email app with every detail filled in — just attach your photos and send. No sensitive documents at this stage; we'll ask for the frame serial number during verification. Prefer to write directly? <a class="sell-mail" href={`mailto:${sellEmail}`}>{sellEmail}</a></p>
+				</div>
+
+				<p class="sell-status" id="sell-status" role="status" hidden></p>
+			</form>
+		</div>
+	</section>
+
+	<section class="sell-facts" aria-label="How we buy bikes">
+		<div><span>01 / WE'RE BUYING</span><strong>Any well-kept bike</strong></div>
+		<div><span>02 / SAME STANDARD</span><strong>Inspected and scored</strong></div>
+		<div><span>03 / FAIR REVIEW</span><strong>Priced on condition</strong></div>
+	</section>
+
+	<script>
+		const form = document.querySelector<HTMLFormElement>('#sell-form');
+		const status = document.querySelector<HTMLElement>('#sell-status');
+		const SELL_EMAIL = 'vo2bikes.official@gmail.com';
+
+		form?.addEventListener('submit', (event) => {
+			event.preventDefault();
+			const data = new FormData(form);
+			const value = (key: string) => String(data.get(key) ?? '').trim();
+
+			const bike = value('bike');
+			const name = value('name');
+			const body = [
+				'Hi VO2 Bikes,',
+				'',
+				"I'd like to sell my bike. Here are the details:",
+				'',
+				`Seller's name: ${name}`,
+				`WhatsApp / mobile: ${value('phone')}`,
+				`Bike brand & model: ${bike}`,
+				`Approximate purchase year: ${value('year')}`,
+				`Original purchase bill available: ${value('bill')}`,
+				`Expected selling price (INR): ${value('price')}`,
+				`Location: ${value('location')}`,
+				'',
+				'Condition & known issues:',
+				value('condition'),
+				'',
+				'Photos I will attach:',
+				'- Full bike, both sides',
+				'- Drivetrain (chain, cassette, crankset)',
+				'- Frame and fork close-ups',
+				'- Wheels and tyres',
+				'- Any visible damage or wear',
+				'',
+				'Frame serial number can be shared during verification.',
+				'',
+				'Thanks,',
+				name,
+			].join('\n');
+
+			const subject = `Sell your bike: ${bike}`;
+			window.location.href = `mailto:${SELL_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+			if (status) {
+				status.hidden = false;
+				status.textContent = `Your email app should open with the details filled in. Attach your photos, then send to ${SELL_EMAIL}.`;
+			}
+		});
+	</script>
+</Layout>
+
+<style>
+	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; }
+	.page-intro .display-heading { font-size: clamp(2.8rem, 6.4vw, 5.16rem); }
+	.page-intro .lead { margin: 1.2rem 0 0; }
+
+	.sell-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 2.25rem clamp(1.25rem, 10vw, 10rem); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(12, 17, 20, 0.94); }
+	.sell-steps div { display: grid; gap: 0.45rem; }
+	.sell-steps span { color: var(--signal); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; }
+	.sell-steps strong { font-family: 'Barlow Condensed', sans-serif; font-size: 1.35rem; font-weight: 600; line-height: 1.1; text-transform: uppercase; }
+
+	.sell-section { padding: 4rem clamp(1.25rem, 7vw, 7rem) 5rem; background: rgba(8, 12, 15, 0.96); }
+	.sell-inner { max-width: 1440px; margin: 0 auto; }
+	.sell-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin: 0 0 2rem; }
+	.sell-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.sell-heading h2 span { color: var(--signal); }
+	.sell-heading > p { max-width: 360px; margin: 0; color: #cfdddf; font-size: 0.8rem; line-height: 1.7; }
+
+	.sell-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem 1.5rem; max-width: 1040px; }
+	.field { display: grid; gap: 0.45rem; min-width: 0; }
+	.field.full { grid-column: 1 / -1; }
+	.field label { color: var(--paper); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+	.field input, .field select, .field textarea { width: 100%; min-height: 46px; padding: 0 0.85rem; border: 1px solid var(--line); background: rgba(6, 10, 12, 0.72); color: var(--paper); font-size: 0.78rem; font-family: inherit; }
+	.field textarea { min-height: 130px; padding: 0.7rem 0.85rem; line-height: 1.6; resize: vertical; }
+	.field :is(input, select, textarea)::placeholder { color: #7f8d91; }
+	.field :is(input, select, textarea):focus { outline: 0; border-color: var(--signal); }
+	.field select { padding-right: 2rem; cursor: pointer; }
+	.field select option { background: #10171a; color: var(--paper); }
+
+	.photo-checklist { display: grid; gap: 0.7rem; padding: 1.1rem 1.2rem; border: 1px dashed var(--line); background: rgba(6, 10, 12, 0.55); }
+	.photo-checklist > span { color: var(--paper); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+	.photo-checklist ul { display: grid; gap: 0.42rem; margin: 0; padding: 0; list-style: none; }
+	.photo-checklist li { display: flex; gap: 0.55rem; color: #cfdddf; font-size: 0.72rem; line-height: 1.5; }
+	.photo-checklist .check-mark { color: var(--signal); }
+	.photo-checklist small { color: var(--muted); font-size: 0.64rem; line-height: 1.6; }
+
+	.sell-submit { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; flex-wrap: wrap; margin-top: 0.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+	.sell-submit .button-primary { cursor: pointer; }
+	.sell-submit .submit-note { max-width: 460px; margin: 0; color: var(--muted); font-size: 0.66rem; line-height: 1.7; }
+	.sell-mail { color: var(--paper); text-decoration-color: var(--signal); text-underline-offset: 4px; }
+	.sell-status { grid-column: 1 / -1; margin: 0.4rem 0 0; padding: 0.85rem 1rem; border: 1px solid rgba(131, 229, 220, 0.5); color: var(--paper); font-size: 0.72rem; line-height: 1.6; }
+	.sell-status[hidden] { display: none; }
+
+	.sell-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 2.25rem clamp(1.25rem, 10vw, 10rem); border-top: 1px solid var(--line); background: rgba(8, 12, 15, 0.94); }
+	.sell-facts div { display: grid; gap: 0.5rem; }
+	.sell-facts span { color: var(--signal); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; }
+	.sell-facts strong { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; }
+
+	@media (max-width: 760px) {
+		.page-intro { padding-top: 3.5rem; padding-bottom: 2.5rem; }
+		.sell-steps { grid-template-columns: 1fr; gap: 1.3rem; }
+		.sell-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
+		.sell-form { grid-template-columns: 1fr; }
+		.sell-section { padding-top: 3rem; padding-bottom: 3.5rem; }
+		.sell-submit { justify-content: flex-start; }
+		.sell-facts { grid-template-columns: 1fr; gap: 1.3rem; }
+	}
+</style>

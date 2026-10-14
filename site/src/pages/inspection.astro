@@ -43,13 +43,12 @@ const inspection = [
 		<p class="lead">Every pre-owned bike is inspected before it reaches the showroom. We score six areas out of 100 and show the breakdown with the listing.</p>
 	</section>
 
-	<section class="score-summary" aria-label="Inspection score structure">
+	<section class="inspection-section" id="checklist" aria-labelledby="checklist-title">
+		<section class="score-summary" aria-label="Inspection score structure">
 		<div><strong>100</strong><span>total points</span></div>
 		<div><strong>6</strong><span>inspection areas</span></div>
 		<div><strong>1</strong><span>road test per bike</span></div>
 	</section>
-
-	<section class="inspection-section" id="checklist" aria-labelledby="checklist-title">
 		<div class="inspection-heading">
 			<div><p class="eyebrow">What we check</p><h2 id="checklist-title">The inspection <span>checklist.</span></h2></div>
 			<p>Each listing carries bike-specific readings and notes against these checks.</p>
@@ -73,14 +72,14 @@ const inspection = [
 
 <style>
 	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; }
-	.page-intro .display-heading { font-size: clamp(3.8rem, 8vw, 6.5rem); }
+	.page-intro .display-heading { font-size: clamp(2.8rem, 6vw, 4.5rem); }
 	.page-intro .lead { margin: 1.2rem 0 0; }
-	.score-summary { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin: 0 auto; padding: 1.5rem clamp(1.25rem, 7vw, 7rem); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(8, 12, 15, 0.92); }
+	.score-summary { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin-bottom: 2vh; padding: 1.5rem clamp(1.25rem, 7vw, 7rem);  }
 	.score-summary div { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.3rem 1rem; border-right: 1px solid var(--line); }
 	.score-summary div:last-child { border: 0; }
 	.score-summary strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
 	.score-summary span { color: var(--muted); font-size: 0.7rem; }
-	.inspection-section { padding: 4.5rem clamp(1.25rem, 7vw, 7rem); background: rgba(8, 12, 15, 0.96); }
+	.inspection-section { padding: 4.5rem clamp(1.25rem, 7vw, 7rem); padding-top: 0; background: rgba(8, 12, 15, 0.96); }
 	.inspection-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 2rem; }
 	.inspection-heading h2, .inspection-cta h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 0.95; text-transform: uppercase; }
 	.inspection-heading h2 span { color: var(--signal); }

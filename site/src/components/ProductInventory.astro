@@ -1,10 +1,9 @@
 ---
-import { getAvailableBicycles, urlFor } from '../data/bicycles';
+import { getBicycles, urlFor } from '../data/bicycles';
 import { base } from 'astro:config/client';
 
-const bicycles = await getAvailableBicycles();
+const bicycles = await getBicycles();
 ---
-
 <div class="inventory-tools" aria-label="Filter bicycle inventory">
 	<label class="search-field">
 		<span class="visually-hidden">Search pre-owned bikes</span>
@@ -39,7 +38,11 @@ const bicycles = await getAvailableBicycles();
 			<a class="bike-photo" href={`${base}/products/${bike.slug}/`} aria-label={`View details for ${bike.name}`}>
 				<img src={urlFor(bike.image).width(900).height(700).fit('crop').url()} alt={bike.alt} loading="lazy" />
 				<span class="bike-year">{bike.year}</span>
-				<span class="verified-tag"><span aria-hidden="true">✓</span> INSPECTED</span>
+				{bike.available ? (
+					<span class="verified-tag"><span aria-hidden="true">✓</span> INSPECTED</span>
+				) : (
+					<span class="verified-tag sold-out">SOLD OUT</span>
+				)}
 			</a>
 			<div class="bike-details">
 				<div class="bike-title-row">
@@ -113,6 +116,7 @@ const bicycles = await getAvailableBicycles();
 	.bike-year { position: absolute; z-index: 1; bottom: 0.8rem; left: 0.9rem; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; }
 	.verified-tag { position: absolute; z-index: 1; top: 0.8rem; left: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.55rem; border: 1px solid rgba(131, 229, 220, 0.65); background: rgba(7, 13, 15, 0.86); color: var(--signal); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; }
 	.verified-tag span { font-size: 0.75rem; }
+	.verified-tag.sold-out { border-color: rgba(255, 107, 107, 0.55); color: #ff6b6b; }
 	.bike-details { padding: 1rem 1rem 0.85rem; }
 	.bike-title-row { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
 	.bike-category { margin: 0 0 0.35rem; color: var(--signal); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }

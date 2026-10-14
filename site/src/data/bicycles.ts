@@ -35,6 +35,7 @@ interface SanityBicycleRecord {
 	specification: string;
 	image: SanityImageSource;
 	alt: string;
+	available: boolean;
 	gallery: SanityImageSource[];
 	frame: string;
 	groupset: string;
@@ -61,8 +62,8 @@ interface InspectionStandardRecord {
 	areas: Array<{ maxPoints: number; area: InspectionCheckRecord | null }>;
 }
 
-const AVAILABLE_BICYCLES_QUERY = defineQuery(`
-	*[_type == "bicycle" && available == true] | order(name asc) {
+const BICYCLES_QUERY = defineQuery(`
+	*[_type == "bicycle"] | order(name asc) {
 		"slug": slug,
 		name,
 		year,
@@ -73,6 +74,7 @@ const AVAILABLE_BICYCLES_QUERY = defineQuery(`
 		specification,
 		image { asset, hotspot, crop },
 		alt,
+		available,
 		gallery[]{ asset, hotspot, crop },
 		frame,
 		groupset,
@@ -103,9 +105,9 @@ const formatPrice = (price: number) =>
 		maximumFractionDigits: 0,
 	}).format(price);
 
-export async function getAvailableBicycles(): Promise<Bicycle[]> {
+export async function getBicycles(): Promise<Bicycle[]> {
 	const [records, standard] = await Promise.all([
-		sanityClient.fetch<SanityBicycleRecord[]>(AVAILABLE_BICYCLES_QUERY),
+		sanityClient.fetch<SanityBicycleRecord[]>(BICYCLES_QUERY),
 		sanityClient.fetch<InspectionStandardRecord | null>(INSPECTION_AREAS_QUERY),
 	]);
 	const areaOrder = new Map(

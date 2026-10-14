@@ -1,0 +1,224 @@
+---
+import Layout from '../layouts/Layout.astro';
+import type { ImageMetadata } from 'astro';
+
+const bookEmail = 'vo2bikes.official@gmail.com';
+const bookHref = `mailto:${bookEmail}?subject=${encodeURIComponent('Book a service')}`;
+
+interface ServicePackage {
+	index: string;
+	level: string;
+	title: string;
+	tagline: string;
+	description: string;
+	designedFor?: string;
+	inclusionsLabel: string;
+	inclusions: string[];
+	note?: string;
+	image?: ImageMetadata;
+}
+
+// To use a real photo for a package: import it at the top of this file and add
+// `image: myImport` to that package below (see `../assets`). Until then each
+// package renders a styled placeholder in the image column.
+const services: ServicePackage[] = [
+	{
+		index: '01',
+		level: 'Level 1',
+		title: 'Essential Care',
+		tagline: 'Clean. Tune. Ride.',
+		description:
+			'For regularly ridden bicycles that need cleaning, adjustments and a mechanical check. Give your bike the attention it needs to keep performing at its best. Our Essential Care service focuses on cleaning, basic mechanical adjustments and key safety checks to help keep your bicycle running smoothly.',
+		designedFor: 'Routine maintenance, regular riders and bikes that need a general tune-up.',
+		inclusionsLabel: "Potential inclusions, subject to your mechanic's confirmation:",
+		inclusions: [
+			'Bicycle wash and surface cleaning',
+			'Drivetrain cleaning and lubrication',
+			'Gear-shifting adjustment',
+			'Brake adjustment and functional checks',
+			'Tyre pressure and visual tyre inspection',
+			'General bolt and component check, using appropriate torque specifications',
+		],
+	},
+	{
+		index: '02',
+		level: 'Level 2',
+		title: 'Performance Care',
+		tagline: 'More than a tune-up.',
+		description:
+			"For riders looking for a deeper clean and more detailed mechanical attention. When routine maintenance isn't enough, Performance Care takes your bike's servicing a step further. We focus on a more thorough drivetrain clean, wheel condition and selected bearing systems, helping address accumulated dirt, mechanical wear and adjustment issues.",
+		designedFor:
+			'Frequently ridden bicycles, bikes needing more detailed maintenance, and riders preparing for demanding training or long rides.',
+		inclusionsLabel: "Potential inclusions, subject to your mechanic's confirmation:",
+		inclusions: [
+			'Thorough bicycle and drivetrain cleaning',
+			'Drivetrain removal for cleaning, where applicable',
+			'Wheel truing assessment and adjustment',
+			'Hub inspection and servicing where required',
+			'Headset inspection and servicing where required',
+			'Brake and gear tuning',
+			'Post-service functional checks',
+		],
+	},
+	{
+		index: '03',
+		level: 'Level 3',
+		title: 'Complete Overhaul',
+		tagline: 'Strip down. Inspect. Rebuild.',
+		description:
+			'For bicycles that need extensive servicing, a deeper inspection and a more comprehensive refresh. Give your bicycle a more comprehensive refresh with a detailed overhaul tailored to its condition. Depending on the bike and agreed scope, this service can involve extensive disassembly, cleaning, inspection, lubrication and reassembly, followed by mechanical adjustment and functional testing.',
+		designedFor:
+			'Bikes with significant service needs, bicycles returning to regular use after a long break, or riders seeking a comprehensive maintenance refresh.',
+		inclusionsLabel: "Potential inclusions, subject to your mechanic's confirmation:",
+		inclusions: [
+			'Extensive bicycle cleaning',
+			'Disassembly of agreed components',
+			'Detailed drivetrain cleaning',
+			'Inspection of accessible bearings and mechanical systems',
+			'Wheel condition assessment and truing where appropriate',
+			'Reassembly and adjustment',
+			'Final functional and safety checks',
+		],
+		note: 'A complete overhaul is not automatically a repair of every worn component. Replacement parts, specialist repairs and work outside the agreed scope should be quoted separately.',
+	},
+	{
+		index: '04',
+		level: 'Specialist service',
+		title: 'Carbon Care & Cockpit Service',
+		tagline: 'Special attention for carbon and alloy handlebars, stems and seatposts.',
+		description:
+			'Carbon components demand careful handling, correct installation and attention to manufacturer specifications. Our Carbon Care options focus on inspecting accessible component surfaces, checking mounting areas and servicing selected cockpit components according to the agreed scope and manufacturer guidance.',
+		inclusionsLabel: 'Available services may include:',
+		inclusions: [
+			'Carbon drop-bar servicing',
+			'Carbon flat-bar servicing',
+			'Alloy handlebar servicing',
+			'Stem and seatpost inspection',
+			'Appropriate torque-controlled reassembly',
+			'Inspection for visible damage or installation concerns',
+		],
+		note: 'A visual inspection cannot rule out hidden carbon damage. Components suspected of structural damage may require specialist assessment or replacement.',
+	},
+];
+---
+
+<Layout title="Bicycle Care & Servicing | VO2 Bikes" description="Professional bike servicing from VO2 Bikes — essential care, performance care, complete overhauls and specialist carbon cockpit care.">
+	<section class="page-intro">
+		<p class="eyebrow">Bicycle care / servicing &amp; maintenance</p>
+		<h1 class="display-heading">Every ride deserves a<br />better-prepared <span>bike.</span></h1>
+		<p class="lead">Your bicycle is more than a machine. It's the equipment you trust on every climb, every descent and every kilometre.</p>
+		<p class="lead">At VO<sub>2</sub> Bikes, we offer professional bicycle servicing and maintenance designed to keep your bike clean, finely tuned and ready for the road ahead.</p>
+		<p class="lead">From routine mechanical care to a comprehensive bicycle overhaul, our service options are designed around your bike's condition, your riding needs and the level of attention it requires.</p>
+		<p class="intro-signature">Precision in every detail. <span>Confidence in every ride.</span></p>
+		<div class="intro-actions">
+			<a class="button-primary" href="#packages">Explore our service packages <span aria-hidden="true">↓</span></a>
+			<a class="button-secondary" href={bookHref}>Book a service <span aria-hidden="true">↗</span></a>
+		</div>
+	</section>
+
+	<section class="services-section" id="packages" aria-labelledby="packages-title">
+		<div class="services-inner">
+			<div class="section-heading">
+				<div>
+					<p class="eyebrow">Service packages</p>
+					<h2 id="packages-title">Choose the level of <span>care.</span></h2>
+				</div>
+				<p>Four ways to look after your bike — from a routine clean and tune through to a complete overhaul or specialist carbon care. Final scope and pricing are confirmed by your mechanic.</p>
+			</div>
+
+			<div class="package-list">
+				{services.map((svc) => (
+					<article class="package-card">
+						<div class="package-specs">
+							<p class="package-level">{svc.level}</p>
+							<h3 class="package-title">{svc.title}</h3>
+							<p class="package-tagline">{svc.tagline}</p>
+							<p class="package-desc">{svc.description}</p>
+							{svc.designedFor && <p class="package-for"><strong>Designed for:</strong> {svc.designedFor}</p>}
+							<div class="package-inclusions">
+								<p class="inclusions-title">{svc.inclusionsLabel}</p>
+								<ul>
+									{svc.inclusions.map((item) => (
+										<li><span class="check-mark" aria-hidden="true">✓</span><span>{item}</span></li>
+									))}
+								</ul>
+							</div>
+							{svc.note && <p class="package-note">{svc.note}</p>}
+						</div>
+						<div class="package-media">
+							{svc.image ? (
+								<img src={svc.image.src} alt={`${svc.title} service`} loading="lazy" />
+							) : (
+								<div class="package-placeholder" role="img" aria-label={`${svc.title} service photo`}>
+									<span class="ph-index">{svc.index}</span>
+									<span class="ph-label">{svc.title}</span>
+									<span class="ph-caption">Service photo coming soon</span>
+								</div>
+							)}
+						</div>
+					</article>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<section class="services-cta">
+		<div>
+			<p class="eyebrow">Ready when you are</p>
+			<h2>Book your bike in<br />for <span>care.</span></h2>
+		</div>
+		<a class="button-primary" href={bookHref}>Book a service <span aria-hidden="true">↗</span></a>
+	</section>
+</Layout>
+
+<style>
+	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; }
+	.page-intro .display-heading { font-size: clamp(2.8rem, 6.4vw, 5.16rem); }
+	.page-intro .lead { margin: 1.2rem 0 0; }
+	.page-intro .lead + .lead { margin-top: 1rem; }
+	.intro-signature { margin: 1.7rem 0 0; color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.35rem; font-weight: 700; line-height: 1.15; letter-spacing: 0.02em; text-transform: uppercase; }
+	.intro-signature span { color: var(--signal); }
+	.intro-actions { display: flex; align-items: center; gap: 1.6rem; flex-wrap: wrap; margin-top: 2rem; }
+
+	.services-section { padding: 4rem clamp(1.25rem, 7vw, 7rem) 5rem; background: rgba(8, 12, 15, 0.96); }
+	.services-inner { max-width: 1440px; margin: 0 auto; }
+	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin: 0 0 2rem; }
+	.section-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.section-heading h2 span { color: var(--signal); }
+	.section-heading > p { max-width: 380px; margin: 0; color: #cfdddf; font-size: 0.8rem; line-height: 1.7; }
+
+	.package-list { display: grid; gap: 1.25rem; }
+	.package-card { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 2rem; padding: 2rem; border: 1px solid var(--line); background: rgba(9, 14, 17, 0.94); }
+	.package-specs { display: grid; align-content: start; gap: 0.7rem; min-width: 0; }
+	.package-level { margin: 0; color: var(--signal); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+	.package-title { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.9rem, 3vw, 2.6rem); line-height: 1; text-transform: uppercase; }
+	.package-tagline { margin: 0; color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+	.package-desc { margin: 0.1rem 0 0; color: #cfdddf; font-size: 0.82rem; line-height: 1.8; }
+	.package-for { margin: 0; color: #cfdddf; font-size: 0.78rem; line-height: 1.7; }
+	.package-for strong { color: var(--paper); }
+	.package-inclusions { margin-top: 0.3rem; }
+	.inclusions-title { margin: 0 0 0.7rem; color: var(--muted); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+	.package-inclusions ul { display: grid; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
+	.package-inclusions li { display: flex; gap: 0.55rem; color: #d4e0e2; font-size: 0.75rem; line-height: 1.55; }
+	.check-mark { color: var(--signal); }
+	.package-note { margin: 0.5rem 0 0; padding: 0.8rem 1rem; border-left: 2px solid var(--signal); background: rgba(6, 10, 12, 0.6); color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
+
+	.package-media { position: relative; min-height: 260px; border: 1px solid var(--line); background: #151d20; overflow: hidden; }
+	.package-media img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.8); }
+	.package-placeholder { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 0.55rem; padding: 1.5rem; text-align: center; background: radial-gradient(120% 130% at 30% 0%, rgba(0, 255, 17, 0.07), transparent 55%), linear-gradient(135deg, rgba(21, 29, 32, 0.92), rgba(6, 10, 12, 0.96)); }
+	.ph-index { color: rgba(226, 242, 244, 0.14); font-family: 'Barlow Condensed', sans-serif; font-size: 4.6rem; font-weight: 700; line-height: 1; }
+	.ph-label { color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+	.ph-caption { color: rgba(170, 184, 188, 0.65); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+
+	.services-cta { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3.5rem clamp(1.25rem, 10vw, 10rem); background: rgba(12, 17, 20, 0.96); }
+	.services-cta h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.2rem, 4.5vw, 3.6rem); line-height: 0.95; text-transform: uppercase; }
+	.services-cta h2 span { color: var(--signal); }
+
+	@media (max-width: 900px) {
+		.page-intro { padding-top: 3.5rem; padding-bottom: 2.5rem; }
+		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
+		.package-card { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.4rem; }
+		.services-section { padding-top: 3rem; padding-bottom: 3.5rem; }
+		.services-cta { align-items: flex-start; flex-direction: column; }
+	}
+</style>

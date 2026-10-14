@@ -1,14 +1,12 @@
 ---
 import ProductInventory from '../components/ProductInventory.astro';
 import Layout from '../layouts/Layout.astro';
-import backdrop from '../assets/backdrop.avif';
 
-const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`;
 
 ---
 
 		<Layout title="Verified Pre-owned Bikes | VO2 Bikes" description="Browse quality-checked pre-owned bikes with a transparent inspection score on every listing.">
-		<style is:inline set:html={inlineStyles}></style>
+
 
 	<section class="page-intro">
 			<p class="eyebrow">Pre-owned collection / inspected individually</p>
@@ -60,6 +58,6 @@ const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 4
 	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 7vw, 7rem) 3rem; }
 	.page-intro .display-heading { font-size: clamp(3.8rem, 8vw, 6.5rem); }
 	.page-intro .lead { margin: 1.2rem 0 0; }
-	.catalog { padding: 0 clamp(1.25rem, 7vw, 7rem) 5rem; }
+	.catalog { padding: 0 clamp(1.25rem, 7vw, 7rem) 5rem; background: rgba(8, 12, 15, 0.96);}
 	@media (max-width: 640px) { .page-intro { padding-top: 3.5rem; } .catalog { padding-right: 1.2rem; padding-left: 1.2rem; } }
 </style>

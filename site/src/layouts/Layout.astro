@@ -11,7 +11,7 @@
 		const currentPath = Astro.url.pathname;
 import { base } from 'astro:config/client';
 import Logo from '../assets/logo_combined.jpeg';
-import backdrop from '../assets/backdrop-giant.jpg';
+import backdrop from '../assets/logo3.webp';
 
 const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`; 
 ---
@@ -39,7 +39,9 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 						<nav class="primary-nav" aria-label="Main navigation">
 							<a href={`${base}/`} aria-current={currentPath === `${base}/` ? 'page' : undefined}>HOME</a>
 							<a href={`${base}/products/`} aria-current={currentPath.startsWith(`${base}/products/`) ? 'page' : undefined}>BIKES</a>
+							<a href={`${base}/services/`} aria-current={currentPath.startsWith(`${base}/services/`) ? 'page' : undefined}>SERVICES</a>
 							<a href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
+							<a href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
 							<a href={`${base}/about/`} aria-current={currentPath.startsWith(`${base}/about/`) ? 'page' : undefined}>ABOUT</a>
 						</nav>
 						<a class="header-cta" href={`${base}/products/`}>Shop verified bikes <span aria-hidden="true">↗</span></a>
@@ -68,7 +70,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				--paper: #f1f7f8;
 				--muted: #aab8bc;
 				--line: rgba(226, 242, 244, 0.18);
-				--signal: #83e5dc;
+				--signal: #00ff11;
 			}
 			* { box-sizing: border-box; }
 			html { min-width: 320px; scroll-behavior: smooth; }
@@ -105,8 +107,8 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			.wordmark-mark {
 				display: grid;
 				place-items: center;
-				width: 130px;
-				height: 43px;
+				width: 190px;
+				height: 50px;
 				aspect-ratio: 1;
 				/* border: 1px solid var(--signal); */
 				color: var(--signal);
@@ -151,10 +153,10 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			.footer-wordmark { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; text-decoration: none; }
 			.footer-wordmark span { color: var(--muted); font: 600 0.58rem 'DM Sans', sans-serif; letter-spacing: 0.1em; }
 			.site-footer > a:last-child { text-decoration-color: var(--signal); text-underline-offset: 4px; }
-			@media (max-width: 760px) {
+			@media (max-width: 960px) {
 				.site-header { flex-wrap: wrap; gap: 0.7rem 1rem; padding-top: 0.85rem; padding-bottom: 0.85rem; }
 				.wordmark { margin-right: auto; }
-				.primary-nav { order: 3; width: 100%; justify-content: space-between; gap: 0.5rem; }
+				.primary-nav { order: 3; width: 100%; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; }
 				.primary-nav a { font-size: 0.7rem; }
 				.header-cta { min-height: 38px; padding: 0.55rem 0.7rem; font-size: 0.68rem; }
 				.site-footer { flex-wrap: wrap; }
