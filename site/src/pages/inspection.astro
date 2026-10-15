@@ -2,36 +2,110 @@
 import Layout from '../layouts/Layout.astro';
 import { base } from 'astro:config/client';
 
-const inspection = [
+type InspectionCheck = { name: string; detail: string };
+
+const inspection: Array<{ area: string; points: number; checks: InspectionCheck[] }> = [
 	{
 		area: 'Frame & fork',
 		points: 25,
-		checks: ['Surface condition, cracks, dents, and repair signs', 'Frame and fork alignment', 'Headset play, steerer, and bearing condition', 'Seatpost fit, threads, mounts, and hardware'],
+		checks: [
+			{ name: 'Frame overall condition', detail: 'Inspect the entire frame under good lighting for cracks, deformation, deep gouges and suspicious repairs.' },
+			{ name: 'Carbon frame and fork', detail: 'Examine impact areas, tube junctions, dropouts and visible carbon surfaces for damage or repair indicators. Visual inspection cannot rule out hidden damage.' },
+			{ name: 'Aluminium or steel frame', detail: 'Look for dents, cracks, corrosion, damaged welds, deformation and signs of repair.' },
+			{ name: 'Fork and steerer', detail: 'Inspect fork blades, crown, steerer and dropouts for impact damage, cracks, corrosion or deformation.' },
+			{ name: 'Head tube and bottom bracket area', detail: 'Inspect for cracks, unusual movement, damage around joints and signs of previous impact.' },
+			{ name: 'Rear triangle and dropouts', detail: 'Check stays, dropout alignment, derailleur hanger area and visible damage.' },
+			{ name: 'Seatpost and seat tube', detail: 'Check for slipping, seizure, cracks, excessive insertion marks or damage from overtightening.' },
+			{ name: 'Frame alignment', detail: 'Look for obvious misalignment; use appropriate alignment tools or specialist assessment if suspected.' },
+			{ name: 'Suspension fork or rear shock', detail: 'If fitted, inspect for leaks, stanchion damage, play and functional response.' },
+			{ name: 'Suspension service history', detail: "Request records and compare service requirements with the manufacturer's recommendations." },
+		],
 	},
 	{
 		area: 'Wheels & tyres',
 		points: 20,
-		checks: ['Rim condition and wheel trueness', 'Spoke tension and nipple condition', 'Hub rotation and bearing play', 'Tyre casing, tread, and tubeless setup'],
+		checks: [
+			{ name: 'Rims', detail: 'Inspect for cracks, dents, impact damage, worn brake tracks where applicable and damaged spoke holes.' },
+			{ name: 'Wheel true and roundness', detail: 'Spin each wheel and assess lateral wobble, vertical hop and clearance.' },
+			{ name: 'Hubs and bearings', detail: 'Check for rough rotation, excessive play, binding or abnormal noise.' },
+			{ name: 'Spokes and nipples', detail: 'Check for missing, loose, damaged or corroded spokes and damaged nipples.' },
+			{ name: 'Tyre tread and casing', detail: 'Inspect tread wear, cuts, bulges, exposed casing, sidewall damage and ageing.' },
+			{ name: 'Tyre pressure and retention', detail: "Inflate within the tyre and rim manufacturer's limits; check for pressure loss and secure seating." },
+			{ name: 'Tubeless setup', detail: 'If applicable, inspect sealant condition, valve, bead seating and leakage. Confirm compatibility.' },
+			{ name: 'Axles and thru-axles', detail: 'Check threads, lever or tool interfaces, seating and secure clamping.' },
+			{ name: 'Wheel and axle security', detail: 'Confirm both wheels and all relevant retention mechanisms are secured correctly.' },
+		],
 	},
 	{
 		area: 'Drivetrain',
 		points: 20,
-		checks: ['Chain wear measurement', 'Cassette and chainring tooth wear', 'Gear changes across the full range', 'Derailleur hanger, crank, and bottom bracket'],
+		checks: [
+			{ name: 'Chain condition and wear', detail: 'Measure with a suitable chain-wear gauge and record the result.' },
+			{ name: 'Cassette and freewheel', detail: 'Inspect tooth wear, damaged teeth, looseness and unusual skipping under load.' },
+			{ name: 'Chainrings', detail: 'Check tooth wear, damage, looseness and chain retention.' },
+			{ name: 'Front and rear derailleurs', detail: 'Inspect cage, pivots, mounting, hanger and visible damage.' },
+			{ name: 'Shifting across gears', detail: 'Test each gear combination appropriate to the setup and record missed shifts or hesitation.' },
+			{ name: 'Crankset and crank arms', detail: 'Check for cracks, impact damage, loose hardware and abnormal movement.' },
+			{ name: 'Bottom bracket', detail: 'Check for play, roughness, noise and secure installation.' },
+			{ name: 'Pedals and cleats', detail: 'Inspect pedal bearings, threads, retention mechanism and cleat wear if included.' },
+			{ name: 'Freehub and engagement', detail: 'Check for abnormal play, slipping, roughness or inconsistent engagement.' },
+			{ name: 'Electronic shifting', detail: 'If fitted, test shifting, battery status, connections and error indicators.' },
+			{ name: 'Drivetrain function', detail: 'Check shifting, chain retention and pedal/crank function.' },
+		],
 	},
 	{
 		area: 'Braking',
 		points: 15,
-		checks: ['Pad thickness and remaining life', 'Rotor or rim braking surface', 'Hydraulic lines or cable condition', 'Lever return, alignment, and braking force'],
+		checks: [
+			{ name: 'Brake levers and operation', detail: 'Check smooth operation, return action, secure mounting and appropriate lever feel.' },
+			{ name: 'Brake pads', detail: 'Inspect remaining material, contamination, uneven wear and correct installation.' },
+			{ name: 'Rotors or rim brake tracks', detail: 'Check rotor thickness against its limit, warping, cracks and contamination; inspect rim brake tracks where applicable.' },
+			{ name: 'Hydraulic brakes', detail: 'Check for leaks, damaged hoses, damaged fittings and abnormal lever travel.' },
+			{ name: 'Cables and housing', detail: 'For mechanical systems, inspect fraying, corrosion, routing and smooth operation.' },
+			{ name: 'Brake alignment and clearance', detail: 'Check caliper alignment, pad contact, rotor rub and wheel clearance.' },
+			{ name: 'Static brake test', detail: 'Confirm both brakes hold the bicycle securely and operate independently.' },
+			{ name: 'Brake function', detail: 'Confirm both brakes function correctly before any ride test.' },
+		],
 	},
 	{
 		area: 'Cockpit & fit',
 		points: 10,
-		checks: ['Bar, stem, and seatpost security', 'Saddle rails and adjustment range', 'Torque-critical fasteners', 'Contact points and fit measurements'],
+		checks: [
+			{ name: 'Handlebar', detail: 'Inspect for cracks, dents, corrosion, deformation and secure mounting; pay particular attention to carbon bars.' },
+			{ name: 'Stem and faceplate', detail: 'Check for damage, correct assembly and appropriate torque where specifications are available.' },
+			{ name: 'Headset', detail: 'Check for play, binding, roughness and smooth steering.' },
+			{ name: 'Handlebar tape and grips', detail: 'Record condition, wear and whether replacement is needed.' },
+			{ name: 'Saddle and rails', detail: 'Inspect for cracks, rail damage, deformation and secure mounting.' },
+			{ name: 'Seatpost clamp and hardware', detail: 'Check function, condition and correct clamping; follow manufacturer torque requirements.' },
+			{ name: 'Cables, hoses and routing', detail: 'Inspect for abrasion, pinching, sharp bends, leaks and interference with steering.' },
+			{ name: 'Steering and bearing function', detail: 'Confirm smooth steering without abnormal play or binding.' },
+			{ name: 'Fastener check', detail: 'Check safety-critical fasteners using the correct tools and manufacturer torque specifications where available.' },
+		],
 	},
 	{
 		area: 'Ride test & records',
 		points: 10,
-		checks: ['Road test under load', 'Shifting, braking, handling, and unusual noise', 'Frame or serial number recorded', 'Included components and ownership details'],
+		checks: [
+			{ name: 'Seller identity and ownership', detail: 'Confirm seller identity and obtain a signed declaration that they own the bicycle and are authorised to sell it.' },
+			{ name: 'Frame serial number', detail: 'Photograph the serial number and check it against available documents and any relevant stolen-bike records.' },
+			{ name: 'Purchase documentation', detail: 'Request the original invoice, proof of purchase or other supporting ownership evidence, if available.' },
+			{ name: 'Model and specification', detail: 'Confirm brand, model, model year if verifiable, frame size and component specification.' },
+			{ name: 'Modification history', detail: 'Ask about crashes, frame repairs, repainting, component upgrades and major replacements.' },
+			{ name: 'Included items', detail: 'Record wheels, pedals, charger, battery, accessories, manuals and keys where applicable.' },
+			{ name: 'Lights, computer and accessories', detail: 'Test included electronic accessories and record what is included in the sale.' },
+			{ name: 'E-bike motor and battery', detail: 'If applicable, check diagnostic status, charging, assistance operation and battery health through appropriate tools or records.' },
+			{ name: 'E-bike charger and keys', detail: 'Verify charger compatibility, battery locking and the presence of keys.' },
+			{ name: 'Controlled test ride', detail: 'Only after safety-critical checks pass, test handling, braking and drivetrain operation in a safe area.' },
+			{ name: 'Abnormal noise or movement', detail: 'Record creaks, knocking, rubbing, vibration, slipping or other unexplained symptoms.' },
+			{ name: 'Post-ride recheck', detail: 'Reinspect for newly apparent issues, loosened components or fluid leakage.' },
+			{ name: 'Photographic record', detail: 'Capture full bicycle views, serial number, frame details, drivetrain, wheels, brakes and every material defect.' },
+			{ name: 'Defect register', detail: 'Record each defect, its severity, evidence and proposed action.' },
+			{ name: 'Refurbishment estimate', detail: 'List required parts, labour, service costs and any specialist inspection.' },
+			{ name: 'Purchase economics', detail: 'Calculate purchase price, transport, parts, labour and expected selling costs before approving purchase.' },
+			{ name: 'Final inspection record', detail: 'Record inspection date, inspector names, test limitations and final decision.' },
+			{ name: 'Customer disclosure', detail: 'Disclose material known defects, replaced parts, incomplete checks and relevant repair history.' },
+			{ name: 'Sale handover', detail: 'Provide agreed inclusions, receipt or invoice and any written terms or warranty offered.' },
+		],
 	},
 ];
 ---
@@ -57,7 +131,7 @@ const inspection = [
 			{inspection.map((group, index) => (
 				<article class="inspection-card">
 					<header><span class="inspection-number">0{index + 1}</span><div><h3>{group.area}</h3><span class="weight">{group.points} points</span></div></header>
-					<ul>{group.checks.map((item) => <li><span class="check-mark" aria-hidden="true">✓</span><span class="check-copy">{item}<small>Bike report: [condition / measurement / notes]</small></span></li>)}</ul>
+					<ul>{group.checks.map((item) => <li><span class="check-mark" aria-hidden="true">✓</span><span class="check-copy">{item.name}<small>{item.detail}</small></span></li>)}</ul>
 				</article>
 			))}
 		</div>
@@ -65,36 +139,37 @@ const inspection = [
 	</section>
 
 	<section class="inspection-cta">
-		<div><p class="eyebrow">Transparent by design</p><h2>See the score.<br />Choose your bike.</h2></div>
+		<div><p class="eyebrow">Transparent by design</p><h2>See the score.<br />Choose your <span> bike.</span></h2></div>
 		<a class="button-primary" href={`${base}/products/`}>Shop inspected bikes <span aria-hidden="true">↗</span></a>
 	</section>
 </Layout>
 
 <style>
 	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; }
-	.page-intro .display-heading { font-size: clamp(2.8rem, 6vw, 4.5rem); }
 	.page-intro .lead { margin: 1.2rem 0 0; }
 	.score-summary { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin-bottom: 2vh; padding: 1.5rem clamp(1.25rem, 7vw, 7rem);  }
 	.score-summary div { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.3rem 1rem; border-right: 1px solid var(--line); }
 	.score-summary div:last-child { border: 0; }
 	.score-summary strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
-	.score-summary span { color: var(--muted); font-size: 0.7rem; }
+	.score-summary span { color: var(--muted); font-size: 0.8rem; }
 	.inspection-section { padding: 4.5rem clamp(1.25rem, 7vw, 7rem); padding-top: 0; background: rgba(8, 12, 15, 0.96); }
 	.inspection-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 2rem; }
-	.inspection-heading h2, .inspection-cta h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.inspection-heading h2, .inspection-cta h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
 	.inspection-heading h2 span { color: var(--signal); }
 	.inspection-heading > p { max-width: 340px; margin: 0; color: #cfdddf; font-size: 0.8rem; line-height: 1.7; }
-	.inspection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; max-width: 1200px; margin: 0 auto; }
-	.inspection-card { padding: 1.4rem 0; border-top: 1px solid var(--line); }
+	.inspection-grid { display: grid; max-width: 1200px; margin: 0 auto; }
+	.inspection-card { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 0.9rem 2.5rem; padding: 1.6rem 0; border-top: 1px solid var(--line); }
 	.inspection-card header { display: flex; align-items: start; gap: 1rem; }
-	.inspection-number { padding-top: 0.15rem; color: var(--signal); font-size: 0.68rem; font-weight: 700; }
+	.inspection-number { padding-top: 0.15rem; color: var(--signal); font-size: 0.98rem; font-weight: 700; }
 	.inspection-card h3 { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; text-transform: uppercase; }
-	.weight { color: var(--muted); font-size: 0.65rem; }
-	.inspection-card ul { display: grid; gap: 0.7rem; margin: 1rem 0 0 2rem; padding: 0; list-style: none; }
-	.inspection-card li { display: flex; align-items: start; gap: 0.55rem; color: #d4e0e2; font-size: 0.73rem; line-height: 1.5; }
+	.weight { color: var(--muted); font-size: 0.95rem; }
+	.inspection-card ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 2.2rem; margin: 0; padding: 0; list-style: none; }
+	.inspection-card li { display: flex; align-items: start; gap: 0.55rem; color: #d4e0e2; font-size: 0.8rem; line-height: 1.5; }
 	.check-mark { color: var(--signal); }
-	.check-copy small { display: block; margin-top: 0.15rem; color: var(--muted); font-size: 0.62rem; }
-	.score-note { max-width: 1200px; margin: 1.5rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
+	.check-copy small { display: block; margin-top: 0.2rem; color: var(--muted); font-size: 0.75rem; line-height: 1.55; }
+	.score-note { max-width: 1200px; margin: 1.5rem auto 0; color: var(--muted); font-size: 0.78rem; line-height: 1.7; }
 	.inspection-cta { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3.5rem clamp(1.25rem, 10vw, 10rem); background: rgba(12, 17, 20, 0.96); }
-	@media (max-width: 700px) { .page-intro { padding-top: 3.5rem; } .score-summary { grid-template-columns: 1fr; gap: 0.5rem; } .score-summary div { border-right: 0; border-bottom: 1px solid var(--line); } .inspection-heading { align-items: start; flex-direction: column; gap: 0.8rem; } .inspection-grid { grid-template-columns: 1fr; } .inspection-cta { align-items: flex-start; flex-direction: column; } }
+	.inspection-cta span { margin-left: 0.45rem; color: var(--signal); }
+	@media (max-width: 1000px) { .inspection-card ul { grid-template-columns: 1fr; } }
+	@media (max-width: 700px) { .page-intro { padding-top: 3.5rem; } .score-summary { grid-template-columns: 1fr; gap: 0.5rem; } .score-summary div { border-right: 0; border-bottom: 1px solid var(--line); } .inspection-heading { align-items: start; flex-direction: column; gap: 0.8rem; } .inspection-card { grid-template-columns: 1fr; gap: 0.6rem; } .inspection-cta { align-items: flex-start; flex-direction: column; } }
 </style>

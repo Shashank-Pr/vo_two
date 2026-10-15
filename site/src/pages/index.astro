@@ -44,19 +44,19 @@ import { base } from 'astro:config/client';
 </Layout>
 
 <style>
-	.home-hero { position: relative; display: flex; align-items: center; min-height: min(700px, calc(100svh - 88px)); padding: 5rem clamp(1.25rem, 10vw, 10rem) 7rem; overflow: hidden; }
-	.hero-copy { max-width: 760px; animation: arrive 650ms ease both; }
-	.home-hero .display-heading { margin-top: 1.3rem; font-size: clamp(2.8rem, 7.4vw, 6.16rem); /* 20% smaller than the global .display-heading clamp(3.5rem, 8vw, 7.7rem) */ }
+	.home-hero { position: relative; display: flex; flex-direction: column; min-height: min(700px, calc(100svh - 88px)); padding: 5rem clamp(1.25rem, 10vw, 10rem) 6rem; overflow: hidden; }
+	.hero-copy { max-width: 760px; margin-top: auto; animation: arrive 650ms ease both; }
+	.home-hero .display-heading { margin-top: 1.3rem; }
 	.home-hero .lead { margin: 1.5rem 0 2rem; }
-	.hero-actions { display: flex; align-items: center; gap: 1.8rem; }
-	.hero-stamp { position: absolute; right: clamp(1.25rem, 9vw, 9rem); bottom: 6rem; display: grid; grid-template-columns: 12px auto; align-items: center; gap: 0.25rem 0.65rem; padding: 1rem 1.15rem; border: 1px solid var(--line); background: rgba(8, 12, 15, 0.86); color: var(--muted); font-size: 0.61rem; letter-spacing: 0.12em; }
+	.hero-actions { display: flex; align-items: center; gap: 1.8rem; flex-wrap: wrap; }
+	.hero-stamp { align-self: flex-end; margin-top: auto; display: grid; grid-template-columns: 12px auto; align-items: center; gap: 0.25rem 0.65rem; padding: 1rem 1.15rem; border: 1px solid var(--line); background: rgba(8, 12, 15, 0.86); color: var(--muted); font-size: 0.61rem; letter-spacing: 0.12em; }
 	.hero-stamp strong { grid-column: 2; color: var(--paper); font-size: 0.76rem; letter-spacing: 0.04em; }
 	.stamp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 12px rgba(131, 229, 220, 0.7); }
 	.hero-index { position: absolute; right: clamp(1.25rem, 5vw, 5.5rem); bottom: 2rem; color: var(--muted); font-size: 0.68rem; letter-spacing: 0.1em; }
 	.hero-index span { color: var(--paper); }
 	.inventory-section { padding: 4.5rem clamp(1.25rem, 7vw, 7rem) 5rem; background: rgba(8, 12, 15, 0.96); }
 	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin: 0 auto 2rem; max-width: 1440px; }
-	.section-heading h2, .workshop-strip h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.6rem, 5vw, 4.3rem); line-height: 0.95; text-transform: uppercase; }
+	.section-heading h2, .workshop-strip h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
 	.section-heading h2 span, .workshop-strip h2 span { color: var(--signal); }
 	.text-link { padding-bottom: 0.4rem; color: var(--paper); font-size: 0.75rem; font-weight: 700; text-decoration-color: var(--signal); text-underline-offset: 5px; }
 	.text-link span { margin-left: 0.45rem; color: var(--signal); }
@@ -64,10 +64,9 @@ import { base } from 'astro:config/client';
 	.workshop-strip > p { max-width: 380px; color: #cfdddf; font-size: 0.9rem; line-height: 1.8; }
 	@keyframes arrive { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 	@media (max-width: 760px) {
-		.home-hero { align-items: flex-start; min-height: 640px; padding: 5rem 1.4rem 7rem; }
-		.home-hero .display-heading { font-size: clamp(0.8rem, 0.8vw, 0.92rem); }
-		.hero-stamp { right: auto; bottom: 2rem; left: 1.4rem; }
-		.hero-index { bottom: 2.5rem; }
+		.home-hero { min-height: min(560px, calc(100svh - 150px)); padding: 3.5rem 1.4rem 2.5rem; }
+		.hero-copy { margin-top: 0; }
+		.hero-actions { gap: 1.1rem 1.4rem; }
 		.inventory-section { padding: 3.5rem 1.2rem; }
 		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
 		.workshop-strip { grid-template-columns: 1fr; gap: 1rem; padding: 3.5rem 1.4rem; }

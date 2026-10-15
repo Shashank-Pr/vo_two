@@ -19,23 +19,25 @@ import { base } from 'astro:config/client';
 					<p>That's why we started VO<sub>2</sub> Bikes.</p>
 					<p>Our mission is to make buying and selling pre-owned bicycles a more transparent, dependable and rider-focused experience. We carefully select quality bikes and evaluate each one against the same detailed inspection standard. Every listing includes an inspection score, category-wise results and bike-specific notes, giving you a clearer picture of the bike's condition and helping you compare options with confidence.</p>
 					<p>We believe trust comes from transparency. By communicating known issues honestly and documenting each bike's condition, we aim to help riders make informed decisions and find a bike that delivers the right balance of quality, performance and value.</p>
-					<p>
-						Here's what we're building differently:
-						<ul>
-							<li>
-								🔍Inspection before listing — We follow a structured process to assess the frame, fork, wheels, brakes, drivetrain and key components.
-							</li>
-							<li>
-								📋Transparency that matters — We document known defects, condition and work carried out, rather than leaving you to discover surprises later.
-							</li>
-							<li>
-								⚙️Value, not just a low price — We help you explore bikes with the specifications and performance you want, at a price that makes sense for you.
-							</li>
-							<li>
-								🤝Cyclist-first thinking — We're building this brand around the things riders care about: the bike, the details and the ride ahead.
-							</li>
-						</ul>
-					</p>
+					<p>Here's what we're building differently:</p>
+					<ul class="about-points">
+						<li>
+							<span class="eyebrow">🔍Inspection before listing</span>
+							<span class="about-point-detail">We follow a structured process to assess the frame, fork, wheels, brakes, drivetrain and key components.</span>
+						</li>
+						<li>
+							<span class="eyebrow">📋Transparency that matters</span>
+							<span class="about-point-detail">We document known defects, condition and work carried out, rather than leaving you to discover surprises later.</span>
+						</li>
+						<li>
+							<span class="eyebrow">⚙️Value, not just a low price</span>
+							<span class="about-point-detail">We help you explore bikes with the specifications and performance you want, at a price that makes sense for you.</span>
+						</li>
+						<li>
+							<span class="eyebrow">🤝Cyclist-first thinking</span>
+							<span class="about-point-detail">We're building this brand around the things riders care about: the bike, the details and the ride ahead.</span>
+						</li>
+					</ul>
 					<p>Whether you're buying your first road bike, looking for your next upgrade, or preparing for your next big challenge, we're here to help you choose a ride that fits your ambitions.</p>
 					<p>We're riders building something for riders — with trust at the heart of every ride.</p>
 					<a class="button-primary" href={`${base}/inspection/`}>Our inspection standard <span aria-hidden="true">↗</span></a>
@@ -53,9 +55,11 @@ import { base } from 'astro:config/client';
 	.about-hero { padding: 5rem 0 3.5rem; }
 	.about-inner { max-width: 100vw; margin: 0 auto; padding: 0 clamp(1.25rem, 10vw, 10rem); }
 	.about-content { padding: 3.5rem 0 4.5rem; background: #080c0f; }
-	.about-hero .display-heading { font-size: clamp(2.2rem, 6.4vw, 5.16rem); }
 	.about-hero .display-heading span { color: var(--signal); }
 	.about-copy p, ul { color: #cfdddf; font-size: 0.83rem; line-height: 1.85; }
+	.about-copy .about-points { display: grid; gap: 1.5rem; margin: 1.5rem 0; padding: 0; list-style: none; }
+	.about-copy .about-points .eyebrow { margin-bottom: 0.5rem; }
+	.about-copy .about-point-detail { display: block; }
 	.about-copy p.about-signoff { margin: 1.6rem 0 0; color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; line-height: 1.15; letter-spacing: 0.02em; text-transform: uppercase; }
 	.about-copy .about-signoff span { color: var(--signal); }
 	.about-copy .button-primary { margin-top: 1rem; }
