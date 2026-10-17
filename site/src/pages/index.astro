@@ -4,22 +4,21 @@ import Layout from '../layouts/Layout.astro';
 import { base } from 'astro:config/client';
 ---
 
-<Layout>
+<Layout title="Verified Pre-owned Bikes | VO2 Bikes" description="Browse quality-checked pre-owned bikes with a transparent inspection score on every listing.">
 	<section class="home-hero" aria-labelledby="home-title">
 		<div class="hero-copy">
 			<p class="eyebrow">Verified pre-owned bikes · Est. 2026</p>
 			<h1 class="display-heading" id="home-title">Ride <span>more.</span><br />Wonder <span>less.</span></h1>
 			<p class="lead">Quality pre-owned road and gravel bikes, carefully inspected, independently scored out of 100, and ready for their next rider.</p>
 			<div class="hero-actions">
-				<a class="button-primary" href="#inventory">Shop verified bikes <span aria-hidden="true">↓</span></a>
-				<a class="button-secondary" href={`${base}/inspection/`}>How we inspect <span aria-hidden="true">↗</span></a>
+				<a class="button-primary" href={`${base}/inspection/`}>How we inspect <span aria-hidden="true">↗</span></a>
 			</div>
 		</div>
-		<div class="hero-stamp" aria-label="Every bike is inspected and scored">
+		<!-- <div class="hero-stamp" aria-label="Every bike is inspected and scored">
 			<span class="stamp-dot"></span>
 			<span>EVERY BIKE</span>
 			<strong>INSPECTED + SCORED</strong>
-		</div>
+		</div> -->
 	</section>
 
 	<section class="inventory-section" id="inventory" aria-labelledby="inventory-title">
@@ -28,7 +27,6 @@ import { base } from 'astro:config/client';
 				<p class="eyebrow">The current collection</p>
 				<h2 id="inventory-title">Pre-owned. <span>Proven.</span></h2>
 			</div>
-			<a class="text-link" href={`${base}/products/`}>View all bikes <span aria-hidden="true">↗</span></a>
 		</div>
 		<ProductInventory />
 	</section>
@@ -36,11 +34,46 @@ import { base } from 'astro:config/client';
 	<section class="workshop-strip" aria-label="Inspection standard">
 		<div>
 			<p class="eyebrow">The vo2bikes difference</p>
-			<h2>Know your bike<br />before the <span>ride.</span></h2>
+			<h2>Know your <span>bike</span><br />before the <span>ride.</span></h2>
 		</div>
 		<p>Every listing includes a transparent 100-point inspection score, with condition notes across the parts that matter.</p>
 		<a class="button-primary" href={`${base}/inspection/`}>What we check <span aria-hidden="true">↗</span></a>
 	</section>
+	<script>
+		const SCROLL_KEY = 'vo2:products-scroll';
+		history.scrollRestoration = 'manual';
+
+		// Remember the listing position whenever we leave this page - this fires
+		// even when the browser caches the page (bfcache).
+		window.addEventListener('pagehide', () => {
+			sessionStorage.setItem(SCROLL_KEY, String(window.scrollY || 0));
+		});
+
+		const isBackForward = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
+
+		window.addEventListener('pageshow', (event) => {
+			// Only restore when arriving via the browser's back/forward (covers
+			// both bfcache restores and fresh back-navigation reloads).
+			const returning = event.persisted || isBackForward;
+			if (!returning) {
+				sessionStorage.removeItem(SCROLL_KEY);
+				return;
+			}
+			const saved = Number(sessionStorage.getItem(SCROLL_KEY));
+			sessionStorage.removeItem(SCROLL_KEY);
+			if (!Number.isFinite(saved) || saved <= 0) return;
+
+			// Re-apply across a few frames so nothing (late images, font swap)
+			// nudges the document height after the first scroll.
+			let attempt = 0;
+			const apply = () => {
+				window.scrollTo(0, saved);
+				attempt += 1;
+				if (attempt < 8) requestAnimationFrame(apply);
+			};
+			requestAnimationFrame(apply);
+		});
+	</script>
 </Layout>
 
 <style>

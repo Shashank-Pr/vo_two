@@ -37,21 +37,21 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 							<img class="wordmark-mark" aria-hidden="true" src={`${Logo.src}`}>
 						</a>
 						<nav class="primary-nav" aria-label="Main navigation">
-							<a href={`${base}/`} aria-current={currentPath === `${base}/` ? 'page' : undefined}>HOME</a>
-							<a href={`${base}/products/`} aria-current={currentPath.startsWith(`${base}/products/`) ? 'page' : undefined}>BIKES</a>
+							<a href={`${base}/`} aria-current={currentPath === `${base}/` || currentPath.startsWith(`${base}/products/`) ? 'page' : undefined}>BIKES</a>
 							<a href={`${base}/services/`} aria-current={currentPath.startsWith(`${base}/services/`) ? 'page' : undefined}>SERVICES</a>
-							<a href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
-							<a class="nav-wide" href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
+							<a href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
+							<a class="nav-wide" href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
 							<a class="nav-wide" href={`${base}/about/`} aria-current={currentPath.startsWith(`${base}/about/`) ? 'page' : undefined}>ABOUT</a>
 							<details class="nav-more">
 								<summary>More</summary>
 								<div class="nav-more-list">
-									<a href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>Sell your bike</a>
+									<a href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
+									<!-- <a href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>Sell your bike</a> -->
 									<a href={`${base}/about/`} aria-current={currentPath.startsWith(`${base}/about/`) ? 'page' : undefined}>About</a>
 								</div>
 							</details>
 						</nav>
-						<a class="header-cta" href={`${base}/products/`}>Shop verified bikes <span aria-hidden="true">↗</span></a>
+						<a class="header-cta" href={currentPath === `${base}/` ? '#inventory' : `${base}/`}>Shop verified bikes <span aria-hidden="true">↗</span></a>
 					</header>
 					<main>
 						<slot />

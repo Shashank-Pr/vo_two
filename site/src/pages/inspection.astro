@@ -113,20 +113,20 @@ const inspection: Array<{ area: string; points: number; checks: InspectionCheck[
 <Layout title="What Sets Us Apart | vo2bikes" description="See the checks behind every vo2bikes pre-owned bicycle inspection score.">
 	<section class="page-intro">
 		<p class="eyebrow">Our promise / one standard for every bike</p>
-		<h1 class="display-heading">Know what<br />you’re <span>buying.</span></h1>
+		<h1 class="display-heading">Verified  <span>bikes. </span><br> Confident <span> ride.</span></h1>
 		<p class="lead">Every pre-owned bike is inspected before it reaches the showroom. We score six areas out of 100 and show the breakdown with the listing.</p>
 	</section>
 
 	<section class="inspection-section" id="checklist" aria-labelledby="checklist-title">
+		<div class="inspection-heading">
+			<div><p class="eyebrow">What we check</p><h2 id="checklist-title">The inspection <span>checklist.</span></h2></div>
+			<p>Each listing carries bike-specific readings and notes against these checks.</p>
+		</div>
 		<section class="score-summary" aria-label="Inspection score structure">
 		<div><strong>100</strong><span>total points</span></div>
 		<div><strong>6</strong><span>inspection areas</span></div>
 		<div><strong>1</strong><span>road test per bike</span></div>
 	</section>
-		<div class="inspection-heading">
-			<div><p class="eyebrow">What we check</p><h2 id="checklist-title">The inspection <span>checklist.</span></h2></div>
-			<p>Each listing carries bike-specific readings and notes against these checks.</p>
-		</div>
 		<div class="inspection-grid">
 			{inspection.map((group, index) => (
 				<article class="inspection-card">
@@ -140,19 +140,19 @@ const inspection: Array<{ area: string; points: number; checks: InspectionCheck[
 
 	<section class="inspection-cta">
 		<div><p class="eyebrow">Transparent by design</p><h2>See the score.<br />Choose your <span> bike.</span></h2></div>
-		<a class="button-primary" href={`${base}/products/`}>Shop inspected bikes <span aria-hidden="true">↗</span></a>
+		<a class="button-primary" href={`${base}/`}>Shop inspected bikes <span aria-hidden="true">↗</span></a>
 	</section>
 </Layout>
 
 <style>
 	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; }
 	.page-intro .lead { margin: 1.2rem 0 0; }
-	.score-summary { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin-bottom: 2vh; padding: 1.5rem clamp(1.25rem, 7vw, 7rem);  }
+	.score-summary { display: grid; place-self: center; grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin-bottom: 2vh; padding: 1.5rem clamp(1.25rem, 7vw, 7rem);  }
 	.score-summary div { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.3rem 1rem; border-right: 1px solid var(--line); }
 	.score-summary div:last-child { border: 0; }
 	.score-summary strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
 	.score-summary span { color: var(--muted); font-size: 0.8rem; }
-	.inspection-section { padding: 4.5rem clamp(1.25rem, 7vw, 7rem); padding-top: 0; background: rgba(8, 12, 15, 0.96); }
+	.inspection-section { padding: 4.5rem clamp(1.25rem, 7vw, 7rem); padding-top: 2.5em; background: rgba(8, 12, 15, 0.96); }
 	.inspection-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 2rem; }
 	.inspection-heading h2, .inspection-cta h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
 	.inspection-heading h2 span { color: var(--signal); }
