@@ -10,7 +10,7 @@
 		} = Astro.props;
 		const currentPath = Astro.url.pathname;
 import { base } from 'astro:config/client';
-import Logo from '../assets/logo_combined.jpeg';
+import Logo from '../assets/logo_combined_png.png';
 import backdrop from '../assets/logo3.webp';
 
 const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`; 
@@ -91,7 +91,14 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				--muted: #aab8bc;
 				--line: rgba(226, 242, 244, 0.18);
 				--signal: #00ff11;
+				/* One shared height for every page hero, so the fixed background
+				   image is framed identically on every page. */
+				--hero-band-min: min(700px, calc(100svh - 88px));
 			}
+			/* Every top-level page hero uses this band, so the transparent area
+			   above the first opaque section is the same height everywhere. */
+			.hero-band { display: flex; flex-direction: column; justify-content: center; min-height: var(--hero-band-min); }
+			@media (max-width: 760px) { :root { --hero-band-min: min(560px, calc(100svh - 150px)); } }
 			* { box-sizing: border-box; }
 			html { min-width: 320px; scroll-behavior: smooth; }
 			body {
