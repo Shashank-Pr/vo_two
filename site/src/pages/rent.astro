@@ -1,0 +1,99 @@
+---
+import ProductInventory from '../components/ProductInventory.astro';
+import Layout from '../layouts/Layout.astro';
+import { getBicycles } from '../data/bicycles';
+import { base } from 'astro:config/client';
+
+const bicycles = await getBicycles();
+const rentableBikes = bicycles.filter((bike) => bike.isRentable);
+---
+
+<Layout title="Rent a Verified Bike | VO2 Bikes" description="Rent quality-checked road and gravel bikes, each one inspected and independently scored out of 100 before it reaches you.">
+	<section class="home-hero hero-band" aria-labelledby="home-title">
+		<div class="hero-copy">
+			<p class="eyebrow">The rental fleet · Est. 2026</p>
+			<h1 class="display-heading" id="home-title">Rent <span>more.</span><br />Own <span>less.</span></h1>
+			<p class="lead">The same quality-checked road and gravel bikes, carefully inspected, independently scored out of 100, and ready to rent for your next ride.</p>
+			<div class="hero-actions">
+				<a class="button-primary" href={`${base}/inspection/`}>How we inspect <span aria-hidden="true">↗</span></a>
+			</div>
+		</div>
+	</section>
+
+	<section class="inventory-section" id="inventory" aria-labelledby="inventory-title">
+		<div class="section-heading">
+			<div>
+				<p class="eyebrow">The rental fleet</p>
+				<h2 id="inventory-title">Rent it. <span>Ride it.</span></h2>
+			</div>
+		</div>
+		<ProductInventory bicycles={rentableBikes} mode="rent" />
+	</section>
+
+	<section class="workshop-strip" aria-label="Inspection standard">
+		<div>
+			<p class="eyebrow">The vo2bikes difference</p>
+			<h2>Know your <span>bike</span><br />before the <span>ride.</span></h2>
+		</div>
+		<p>Every rental includes a transparent 100-point inspection score, so you know exactly what you're riding before you set off.</p>
+		<a class="button-primary" href={`${base}/inspection/`}>What we check <span aria-hidden="true">↗</span></a>
+	</section>
+	<script>
+		const SCROLL_KEY = 'vo2:products-scroll';
+		history.scrollRestoration = 'manual';
+
+		// Remember the listing position whenever we leave this page - this fires
+		// even when the browser caches the page (bfcache).
+		window.addEventListener('pagehide', () => {
+			sessionStorage.setItem(SCROLL_KEY, String(window.scrollY || 0));
+		});
+
+		const isBackForward = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
+
+		window.addEventListener('pageshow', (event) => {
+			// Only restore when arriving via the browser's back/forward (covers
+			// both bfcache restores and fresh back-navigation reloads).
+			const returning = event.persisted || isBackForward;
+			if (!returning) {
+				sessionStorage.removeItem(SCROLL_KEY);
+				return;
+			}
+			const saved = Number(sessionStorage.getItem(SCROLL_KEY));
+			sessionStorage.removeItem(SCROLL_KEY);
+			if (!Number.isFinite(saved) || saved <= 0) return;
+
+			// Re-apply across a few frames so nothing (late images, font swap)
+			// nudges the document height after the first scroll.
+			let attempt = 0;
+			const apply = () => {
+				window.scrollTo(0, saved);
+				attempt += 1;
+				if (attempt < 8) requestAnimationFrame(apply);
+			};
+			requestAnimationFrame(apply);
+		});
+	</script>
+</Layout>
+
+<style>
+	.home-hero { position: relative; padding: 5rem clamp(1.25rem, 10vw, 10rem) 6rem; overflow: hidden; }
+	.hero-copy { max-width: 760px; animation: arrive 650ms ease both; }
+	.home-hero .display-heading { margin-top: 1.3rem; }
+	.home-hero .lead { margin: 1.5rem 0 2rem; }
+	.hero-actions { display: flex; align-items: center; gap: 1.8rem; flex-wrap: wrap; }
+	.inventory-section { padding: 4.5rem clamp(1.25rem, 7vw, 7rem) 5rem; background: rgba(8, 12, 15, 0.96); }
+	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin: 0 auto 2rem; max-width: 1440px; }
+	.section-heading h2, .workshop-strip h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.section-heading h2 span, .workshop-strip h2 span { color: var(--signal); }
+	.workshop-strip { display: grid; grid-template-columns: 1.1fr 1fr auto; align-items: center; gap: 3rem; padding: 4.5rem clamp(1.25rem, 7vw, 7rem); border-top: 1px solid var(--line); background: rgba(12, 17, 20, 0.96); }
+	.workshop-strip > p { max-width: 380px; color: #cfdddf; font-size: 0.9rem; line-height: 1.8; }
+	@keyframes arrive { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+	@media (max-width: 760px) {
+		.home-hero { padding: 3.5rem 1.4rem 2.5rem; }
+		.hero-actions { gap: 1.1rem 1.4rem; }
+		.inventory-section { padding: 3.5rem 1.2rem; }
+		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
+		.workshop-strip { grid-template-columns: 1fr; gap: 1rem; padding: 3.5rem 1.4rem; }
+		.workshop-strip .button-primary { justify-self: start; }
+	}
+</style>

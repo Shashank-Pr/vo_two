@@ -1,8 +1,28 @@
 ---
-import { getBicycles, urlFor } from '../data/bicycles';
+import { getBicycles, urlFor, type Bicycle } from '../data/bicycles';
+import { whatsappHref } from '../data/contact';
 import { base } from 'astro:config/client';
 
-const bicycles = await getBicycles();
+interface Props {
+	/** Bikes to render. Defaults to the whole Sanity inventory. */
+	bicycles?: Bicycle[];
+	/** 'rent' swaps the buying copy for rental copy. */
+	mode?: 'buy' | 'rent';
+}
+
+const { bicycles: supplied, mode = 'buy' } = Astro.props;
+const bicycles = supplied ?? (await getBicycles());
+
+const isRent = mode === 'rent';
+const countLabel = isRent ? 'bikes to rent' : 'verified bikes';
+const unavailableLabel = isRent ? 'UNAVAILABLE' : 'SOLD OUT';
+const enquiryMessage = (bike: Bicycle) =>
+	isRent
+		? `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.year}). Is it available?`
+		: `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}). Is it still available?`;
+
+/** Detail links carry the view mode so the nav can highlight the right tab. */
+const detailHref = (bike: Bicycle) => `${base}/products/${bike.slug}/${isRent ? '?mode=rent' : ''}`;
 ---
 <div class="inventory-tools" aria-label="Filter bicycle inventory">
 	<label class="search-field">
@@ -29,34 +49,34 @@ const bicycles = await getBicycles();
 			<option value="95">95 and above</option>
 		</select>
 	</label>
-	<p class="result-count" aria-live="polite"><span id="bike-count">{bicycles.length}</span> verified bikes</p>
+	<p class="result-count" aria-live="polite"><span id="bike-count">{bicycles.length}</span> {countLabel}</p>
 </div>
 
 <div class="bike-grid" id="bike-grid">
 	{bicycles.map((bike) => (
 		<article class="bike-card" data-name={`${bike.name} ${bike.category}`.toLowerCase()} data-category={bike.category} data-score={bike.score}>
-			<a class="bike-photo" href={`${base}/products/${bike.slug}/`} aria-label={`View details for ${bike.name}`}>
+			<a class="bike-photo" href={detailHref(bike)} aria-label={`View details for ${bike.name}`}>
 				<img src={urlFor(bike.image).width(900).height(700).fit('crop').url()} alt={bike.alt} loading="lazy" />
 				<span class="bike-year">{bike.year}</span>
 				{bike.available ? (
 					<span class="verified-tag"><span aria-hidden="true">✓</span> INSPECTED</span>
 				) : (
-					<span class="verified-tag sold-out">SOLD OUT</span>
+					<span class="verified-tag sold-out">{unavailableLabel}</span>
 				)}
 			</a>
 			<div class="bike-details">
 				<div class="bike-title-row">
-					<div><p class="bike-category">PRE-OWNED <span>·</span> {bike.category}</p><h3><a class="bike-title-link" href={`${base}/products/${bike.slug}/`}>{bike.name}</a></h3></div>
+					<div><p class="bike-category">PRE-OWNED <span>·</span> {bike.category}</p><h3><a class="bike-title-link" href={detailHref(bike)}>{bike.name}</a></h3></div>
 					<div class="inspection-score" aria-label={`Inspection score ${bike.score} out of 100`}><strong>{bike.score}</strong><span>/100</span></div>
 				</div>
 				<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
 				<div class="bike-meta"><span>{bike.distance} ridden</span><strong>{bike.priceLabel}</strong></div>
-				<a class="details-link" href={`${base}/products/${bike.slug}/`}>View bike details <span aria-hidden="true">↗</span></a>
+				<a class="details-link" href={detailHref(bike)}>View bike details <span aria-hidden="true">↗</span></a>
 				<details class="inspection-report">
 					<summary>Inspection breakdown</summary>
 					<ul>{bike.checks.map((check) => <li><span>{check.name}</span><strong>{check.score}<small>/{check.max}</small></strong></li>)}</ul>
 				</details>
-				<a class="enquire-link" href={`mailto:vo2bikes.official@gmail.com?subject=${encodeURIComponent(`Enquiry: ${bike.name}`)}`}>Ask about this bike <span aria-hidden="true">↗</span></a>
+				<a class="enquire-link" href={whatsappHref(enquiryMessage(bike))} target="_blank" rel="noopener noreferrer">Ask about this bike <span aria-hidden="true">↗</span></a>
 			</div>
 		</article>
 	))}

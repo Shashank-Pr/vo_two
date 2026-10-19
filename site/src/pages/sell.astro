@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { contactEmail } from '../data/contact';
 
-const sellEmail = 'vo2bikes.official@gmail.com';
 const currentYear = new Date().getFullYear();
 const maxYear = currentYear + 1;
 
@@ -98,13 +98,13 @@ const photoChecklist = [
 								<li><span class="check-mark" aria-hidden="true">✓</span><span>{shot}</span></li>
 							))}
 						</ul>
-						<small>Attach these to the email we prepare for you. Clear, well-lit photos help us review your bike faster.</small>
+						<small>Attach these to the message we prepare for you. Clear, well-lit photos help us review your bike faster.</small>
 					</div>
 				</div>
 
 				<div class="sell-submit">
 					<button class="button-primary" type="submit">Submit Your Bike Details <span aria-hidden="true">↗</span></button>
-					<p class="submit-note">This opens your email app with every detail filled in — just attach your photos and send. No sensitive documents at this stage; we'll ask for the frame serial number during verification. Prefer to write directly? <a class="sell-mail" href={`mailto:${sellEmail}`}>{sellEmail}</a></p>
+					<p class="submit-note">This opens WhatsApp with every detail filled in — just attach your photos and send. No sensitive documents at this stage; we'll ask for the frame serial number during verification. Prefer to write directly? <a class="sell-mail" href={`mailto:${contactEmail}`}>{contactEmail}</a></p>
 				</div>
 
 				<p class="sell-status" id="sell-status" role="status" hidden></p>
@@ -119,9 +119,10 @@ const photoChecklist = [
 	</section>
 
 	<script>
+		import { whatsappHref } from '../data/contact';
+
 		const form = document.querySelector<HTMLFormElement>('#sell-form');
 		const status = document.querySelector<HTMLElement>('#sell-status');
-		const SELL_EMAIL = 'vo2bikes.official@gmail.com';
 
 		form?.addEventListener('submit', (event) => {
 			event.preventDefault();
@@ -159,12 +160,13 @@ const photoChecklist = [
 				name,
 			].join('\n');
 
-			const subject = `Sell your bike: ${bike}`;
-			window.location.href = `mailto:${SELL_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+			const url = whatsappHref(body);
+			const popup = window.open(url, '_blank');
+			if (!popup) window.location.href = url;
 
 			if (status) {
 				status.hidden = false;
-				status.textContent = `Your email app should open with the details filled in. Attach your photos, then send to ${SELL_EMAIL}.`;
+				status.textContent = 'WhatsApp should open with your bike details filled in. Attach your photos, then send.';
 			}
 		});
 	</script>

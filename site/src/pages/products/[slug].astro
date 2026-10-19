@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getBicycles, urlFor } from '../../data/bicycles';
+import { whatsappHref } from '../../data/contact';
 import { base } from 'astro:config/client';
 import backdrop from '../../assets/backdrop.avif';
 
@@ -60,7 +61,7 @@ const { bike } = Astro.props;
 				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
 			</div>
 			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
-			<a class="button-primary enquiry-button" href={`mailto:vo2bikes.official@gmail.com?subject=${encodeURIComponent(`Enquiry: ${bike.name}`)}`}>Enquire about this bike <span aria-hidden="true">↗</span></a>
+			<a class="button-primary enquiry-button" href={whatsappHref(`Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}) listed at ${bike.priceLabel}. Is it still available?`)} target="_blank" rel="noopener noreferrer">Enquire about this bike <span aria-hidden="true">↗</span></a>
 			<a class="inspection-link" href="#inspection">Read the full inspection <span aria-hidden="true">↓</span></a>
 		</aside>
 	</section>

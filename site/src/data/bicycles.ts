@@ -36,6 +36,8 @@ interface SanityBicycleRecord {
 	image: SanityImageSource;
 	alt: string;
 	available: boolean;
+	/** May be absent on older documents; treated as rentable when missing. */
+	isRentable?: boolean;
 	gallery: SanityImageSource[];
 	frame: string;
 	groupset: string;
@@ -46,6 +48,7 @@ interface SanityBicycleRecord {
 }
 
 export interface Bicycle extends SanityBicycleRecord {
+	isRentable: boolean;
 	checks: Array<{
 		key: string;
 		name: string;
@@ -75,6 +78,7 @@ const BICYCLES_QUERY = defineQuery(`
 		image { asset, hotspot, crop },
 		alt,
 		available,
+		isRentable,
 		gallery[]{ asset, hotspot, crop },
 		frame,
 		groupset,
@@ -131,6 +135,7 @@ export async function getBicycles(): Promise<Bicycle[]> {
 
 		return {
 			...bike,
+			isRentable: bike.isRentable ?? true,
 			checks,
 			score: checks.reduce((total, check) => total + check.score, 0),
 			priceLabel: formatPrice(bike.price),

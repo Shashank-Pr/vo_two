@@ -12,6 +12,9 @@
 import { base } from 'astro:config/client';
 import Logo from '../assets/logo_combined_png.png';
 import backdrop from '../assets/logo3.webp';
+import instagramIcon from '../assets/insta.jpg';
+import whatsappIcon from '../assets/whatsapp.png';
+import { contactEmail, instagramUrl, whatsappHref } from '../data/contact';
 
 const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`; 
 ---
@@ -37,9 +40,10 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 							<img class="wordmark-mark" aria-hidden="true" src={`${Logo.src}`}>
 						</a>
 						<nav class="primary-nav" aria-label="Main navigation">
-							<a href={`${base}/`} aria-current={currentPath === `${base}/` || currentPath.startsWith(`${base}/products/`) ? 'page' : undefined}>BIKES</a>
-							<a href={`${base}/services/`} aria-current={currentPath.startsWith(`${base}/services/`) ? 'page' : undefined}>SERVICES</a>
+							<a data-nav="buy" href={`${base}/`} aria-current={currentPath === `${base}/` || currentPath.startsWith(`${base}/products/`) ? 'page' : undefined}>BUY BIKES</a>
+							<a data-nav="rent" href={`${base}/rent/`} aria-current={currentPath.startsWith(`${base}/rent/`) ? 'page' : undefined}>RENT BIKES</a>
 							<a href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
+							<a href={`${base}/services/`} aria-current={currentPath.startsWith(`${base}/services/`) ? 'page' : undefined}>SERVICES</a>
 							<a class="nav-wide" href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
 							<a class="nav-wide" href={`${base}/about/`} aria-current={currentPath.startsWith(`${base}/about/`) ? 'page' : undefined}>ABOUT</a>
 							<details class="nav-more">
@@ -51,6 +55,21 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 								</div>
 							</details>
 						</nav>
+						<script is:inline>
+							// Bike detail pages are prerendered, so the buy/rent context can
+							// only be read at runtime from the URL. Opening a bike from the
+							// rental fleet carries ?mode=rent, which moves the nav highlight
+							// from BUY BIKES to RENT BIKES.
+							(() => {
+								if (new URLSearchParams(location.search).get('mode') !== 'rent') return;
+								const nav = document.querySelector('.primary-nav');
+								const buy = nav?.querySelector('[data-nav="buy"]');
+								const rent = nav?.querySelector('[data-nav="rent"]');
+								if (!buy || !rent) return;
+								buy.removeAttribute('aria-current');
+								rent.setAttribute('aria-current', 'page');
+							})();
+						</script>
 						<a class="header-cta" href={currentPath === `${base}/` ? '#inventory' : `${base}/`}>Shop verified bikes <span aria-hidden="true">↗</span></a>
 					</header>
 					<main>
@@ -59,7 +78,11 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 					<footer class="site-footer">
 						<a class="footer-wordmark" href={`${base}/`}>VO<sub>2</sub> Bikes <span>/ RIDE. VERIFIED</span></a>
 						<p>Better bikes. Better backed.</p>
-						<a href="mailto:vo2bikes.official@gmail.com">vo2bikes.official@gmail.com</a>
+						<div class="footer-contact">
+							<a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+							<a class="footer-social" href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="vo2bikes on Instagram" title="Instagram"><img src={instagramIcon.src} alt="" width="26" height="26" loading="lazy" /></a>
+							<a class="footer-social" href={whatsappHref("Hi VO2 Bikes! I have a question about one of your bikes.")} target="_blank" rel="noopener noreferrer" aria-label="Message vo2bikes on WhatsApp" title="WhatsApp"><img src={whatsappIcon.src} alt="" width="26" height="26" loading="lazy" /></a>
+						</div>
 					</footer>
 				</div>
 				<script>
@@ -189,7 +212,12 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			.site-footer p { margin: 0; }
 			.footer-wordmark { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; text-decoration: none; }
 			.footer-wordmark span { color: var(--muted); font: 600 0.58rem 'DM Sans', sans-serif; letter-spacing: 0.1em; }
-			.site-footer > a:last-child { text-decoration-color: var(--signal); text-underline-offset: 4px; }
+			.footer-contact { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1.25rem; }
+			.footer-contact a { color: var(--muted); text-decoration-color: var(--signal); text-underline-offset: 4px; }
+			.footer-contact a:hover { color: var(--paper); }
+			.footer-social { display: inline-flex; align-items: center; text-decoration: none; }
+			.footer-social img { display: block; width: 26px; height: 26px; opacity: 0.88; transition: opacity 160ms ease, transform 160ms ease; }
+			.footer-social:hover img, .footer-social:focus-visible img { opacity: 1; transform: translateY(-2px); }
 			@media (max-width: 1024px) {
 				.site-header { flex-wrap: wrap; gap: 0.7rem 1rem; padding-top: 0.85rem; padding-bottom: 0.85rem; }
 				.wordmark { margin-right: auto; }
@@ -205,6 +233,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				.primary-nav a, .nav-more summary { font-size: 0.68rem; }
 				.nav-wide { display: none; }
 				.nav-more { display: block; }
+				.site-footer { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
 			}
 			@media (prefers-reduced-motion: reduce) {
 				html { scroll-behavior: auto; }

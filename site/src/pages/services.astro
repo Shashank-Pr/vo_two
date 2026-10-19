@@ -1,9 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import level1Photo from '../assets/level1_package.avif';
+import level2Photo from '../assets/Level2_service.jpeg';
+import level3Photo from '../assets/level3.avif';
+import carbonPhoto from '../assets/carbon_service_image.jpeg';
+import { whatsappHref } from '../data/contact';
 
-const bookEmail = 'vo2bikes.official@gmail.com';
-const bookHref = `mailto:${bookEmail}?subject=${encodeURIComponent('Book a service')}`;
+const bookHref = whatsappHref("Hi VO2 Bikes, I'd like to book a service.");
 
 interface ServicePackage {
 	index: string;
@@ -14,6 +19,8 @@ interface ServicePackage {
 	designedFor?: string;
 	inclusionsLabel: string;
 	inclusions: string[];
+	/** Display price, e.g. '₹2,500'. Leave unset to show "On request" instead. */
+	price?: string;
 	note?: string;
 	image?: ImageMetadata;
 }
@@ -21,10 +28,16 @@ interface ServicePackage {
 // To use a real photo for a package: import it at the top of this file and add
 // `image: myImport` to that package below (see `../assets`). Until then each
 // package renders a styled placeholder in the image column.
+//
+// NOTE: every `price` below is a PLACEHOLDER — replace it with the real price.
+// Each package is priced independently; delete a package's `price` entry to
+// show "On request" for it instead.
 const services: ServicePackage[] = [
 	{
 		index: '01',
 		level: 'Level 1',
+		price: '₹2,500',
+		image: level1Photo,
 		title: 'Essential Care',
 		tagline: 'Clean. Tune. Ride.',
 		description:
@@ -43,6 +56,8 @@ const services: ServicePackage[] = [
 	{
 		index: '02',
 		level: 'Level 2',
+		price: '₹5,000',
+		image: level2Photo,
 		title: 'Performance Care',
 		tagline: 'More than a tune-up.',
 		description:
@@ -63,6 +78,8 @@ const services: ServicePackage[] = [
 	{
 		index: '03',
 		level: 'Level 3',
+		price: '₹9,000',
+		image: level3Photo,
 		title: 'Complete Overhaul',
 		tagline: 'Strip down. Inspect. Rebuild.',
 		description:
@@ -84,6 +101,8 @@ const services: ServicePackage[] = [
 	{
 		index: '04',
 		level: 'Specialist service',
+		price: '₹3,500',
+		image: carbonPhoto,
 		title: 'Carbon Care & Cockpit Service',
 		tagline: 'Special attention for carbon and alloy handlebars, stems and seatposts.',
 		description:
@@ -110,7 +129,7 @@ const services: ServicePackage[] = [
 			<p class="lead">At VO<sub>2</sub> Bikes, we offer professional bicycle servicing and maintenance designed to keep your bike clean, finely tuned and ready for the road ahead.</p>
 			<div class="intro-actions">
 				<a class="button-primary" href="#packages">Explore our service packages <span aria-hidden="true">↓</span></a>
-				<a class="button-secondary" href={bookHref}>Book a service <span aria-hidden="true">↗</span></a>
+				<a class="button-secondary" href={bookHref} target="_blank" rel="noopener noreferrer">Book a service <span aria-hidden="true">↗</span></a>
 			</div>
 		</div>
 	</section>
@@ -146,7 +165,13 @@ const services: ServicePackage[] = [
 						</div>
 						<div class="package-media">
 							{svc.image ? (
-								<img src={svc.image.src} alt={`${svc.title} service`} loading="lazy" />
+								<Image
+									src={svc.image}
+									alt={`${svc.title} service`}
+									widths={[480, 768, 1080, 1440]}
+									sizes="(max-width: 900px) 100vw, 460px"
+									loading="lazy"
+								/>
 							) : (
 								<div class="package-placeholder" role="img" aria-label={`${svc.title} service photo`}>
 									<span class="ph-index">{svc.index}</span>
@@ -154,6 +179,18 @@ const services: ServicePackage[] = [
 									<span class="ph-caption">Service photo coming soon</span>
 								</div>
 							)}
+						</div>
+						<div class="package-footer">
+							<p class="package-price">
+								<span class="price-label">Price</span>
+								<strong>{svc.price ?? 'On request'}</strong>
+							</p>
+							<a
+								class="button-primary package-book"
+								href={whatsappHref(`Hi VO2 Bikes, I'd like to book the ${svc.title} package (${svc.level}).`)}
+								target="_blank"
+								rel="noopener noreferrer"
+							>Book this package <span aria-hidden="true">↗</span></a>
 						</div>
 					</article>
 				))}
@@ -166,7 +203,7 @@ const services: ServicePackage[] = [
 			<p class="eyebrow">Ready when you are</p>
 			<h2>Book your bike in<br />for <span>care.</span></h2>
 		</div>
-		<a class="button-primary" href={bookHref}>Book a service <span aria-hidden="true">↗</span></a>
+		<a class="button-primary" href={bookHref} target="_blank" rel="noopener noreferrer">Book a service <span aria-hidden="true">↗</span></a>
 	</section>
 </Layout>
 
@@ -186,7 +223,7 @@ const services: ServicePackage[] = [
 	.section-heading > p { max-width: 380px; margin: 0; color: #cfdddf; font-size: 0.8rem; line-height: 1.7; }
 
 	.package-list { display: grid; gap: 1.25rem; }
-	.package-card { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 2rem; padding: 2rem; border: 1px solid var(--line); background: rgba(9, 14, 17, 0.94); }
+	.package-card { display: grid; align-items: center; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 2rem; padding: 2rem; border: 1px solid var(--line); background: rgba(9, 14, 17, 0.94); }
 	.package-specs { display: grid; align-content: start; gap: 0.7rem; min-width: 0; }
 	.package-level { margin: 0; color: var(--signal); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 	.package-title { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.9rem, 3vw, 2.6rem); line-height: 1; text-transform: uppercase; }
@@ -201,8 +238,13 @@ const services: ServicePackage[] = [
 	.check-mark { color: var(--signal); }
 	.package-note { margin: 0.5rem 0 0; padding: 0.8rem 1rem; border-left: 2px solid var(--signal); background: rgba(6, 10, 12, 0.6); color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
 
+	.package-footer { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+	.package-price { display: flex; align-items: baseline; gap: 0.6rem; margin: 0; }
+	.price-label { color: var(--muted); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+	.package-price strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; line-height: 1; }
+
 	.package-media { position: relative; min-height: 260px; border: 1px solid var(--line); background: #151d20; overflow: hidden; }
-	.package-media img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.8); }
+	.package-media img { width: 100%; height: 100%; object-fit: contain; filter: saturate(0.8); }
 	.package-placeholder { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 0.55rem; padding: 1.5rem; text-align: center; background: radial-gradient(120% 130% at 30% 0%, rgba(0, 255, 17, 0.07), transparent 55%), linear-gradient(135deg, rgba(21, 29, 32, 0.92), rgba(6, 10, 12, 0.96)); }
 	.ph-index { color: rgba(226, 242, 244, 0.14); font-family: 'Barlow Condensed', sans-serif; font-size: 4.6rem; font-weight: 700; line-height: 1; }
 	.ph-label { color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
@@ -216,6 +258,8 @@ const services: ServicePackage[] = [
 		.page-intro { padding-top: 3.5rem; padding-bottom: 2.5rem; }
 		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
 		.package-card { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.4rem; }
+		.package-footer { align-items: flex-start; flex-direction: column; gap: 1rem; }
+		.package-book { width: 100%; }
 		.services-section { padding-top: 3rem; padding-bottom: 3.5rem; }
 		.services-cta { align-items: flex-start; flex-direction: column; }
 	}
