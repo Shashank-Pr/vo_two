@@ -147,7 +147,7 @@ const inspection: Array<{ area: string; points: number; checks: InspectionCheck[
 </Layout>
 
 <style>
-	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; }
+	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; background: var(--hero-bg); }
 	.page-intro .lead { margin: 1.2rem 0 0; }
 	.score-summary { display: grid; place-self: center; grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin-bottom: 2vh; padding: 1.5rem clamp(1.25rem, 7vw, 7rem);  }
 	.score-summary div { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.3rem 1rem; border-right: 1px solid var(--line); }
@@ -173,5 +173,5 @@ const inspection: Array<{ area: string; points: number; checks: InspectionCheck[
 	.inspection-cta { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3.5rem clamp(1.25rem, 10vw, 10rem); background: rgba(12, 17, 20, 0.96); }
 	.inspection-cta span { margin-left: 0.45rem; color: var(--signal); }
 	@media (max-width: 1000px) { .inspection-card ul { grid-template-columns: 1fr; } }
-	@media (max-width: 700px) { .page-intro { padding-top: 3.5rem; } .score-summary { grid-template-columns: 1fr; gap: 0.5rem; } .score-summary div { border-right: 0; border-bottom: 1px solid var(--line); } .inspection-heading { align-items: start; flex-direction: column; gap: 0.8rem; } .inspection-card { grid-template-columns: 1fr; gap: 0.6rem; } .inspection-cta { align-items: flex-start; flex-direction: column; } }
+	@media (max-width: 760px) { .page-intro { padding: 3.5rem 1.4rem 2.5rem; } .score-summary { grid-template-columns: 1fr; gap: 0.5rem; } .score-summary div { border-right: 0; border-bottom: 1px solid var(--line); } .inspection-heading { align-items: start; flex-direction: column; gap: 0.8rem; } .inspection-card { grid-template-columns: 1fr; gap: 0.6rem; } .inspection-cta { align-items: flex-start; flex-direction: column; } }
 </style>

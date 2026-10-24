@@ -16,6 +16,7 @@ export async function getStaticPaths() {
 }
 
 const { bike } = Astro.props;
+bike.gallery = [bike.image, ...bike.gallery];
 ---
 
 <Layout title={`${bike.name} | VO2 Bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by VO2 Bikes.`}>
@@ -30,7 +31,7 @@ const { bike } = Astro.props;
 					<button
 						type="button"
 						class:list={['thumb', { 'is-active': index === 0 }]}
-						aria-label={`Show ${bike.name} photo ${index + 1}`}
+						aria-label={`Show name} photo ${index + 1}`}
 						aria-current={index === 0 ? 'true' : undefined}
 						data-index={index}
 						data-src={urlFor(image).width(1200).height(900).fit('crop').url()}

@@ -16,6 +16,7 @@ import instagramIcon from '../assets/insta.jpg';
 import whatsappIcon from '../assets/whatsapp.png';
 import { contactEmail, instagramUrl, whatsappHref } from '../data/contact';
 
+const bg_url = backdrop.src;
 const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`; 
 ---
 
@@ -30,7 +31,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 				<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-				<style is:inline set:html={bodyBackground}></style>
+				<!-- <style is:inline set:html={bodyBackground}></style> -->
 				<title>{title}</title>
 			</head>
 			<body>
@@ -41,12 +42,12 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 						</a>
 						<nav class="primary-nav" aria-label="Main navigation">
 							<a data-nav="buy" href={`${base}/`} aria-current={currentPath === `${base}/` || currentPath.startsWith(`${base}/products/`) ? 'page' : undefined}>BUY BIKES</a>
-							<a data-nav="rent" href={`${base}/rent/`} aria-current={currentPath.startsWith(`${base}/rent/`) ? 'page' : undefined}>RENT BIKES</a>
 							<a href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
+							<a data-nav="rent" href={`${base}/rent/`} aria-current={currentPath.startsWith(`${base}/rent/`) ? 'page' : undefined}>RENT BIKES</a>
 							<a href={`${base}/services/`} aria-current={currentPath.startsWith(`${base}/services/`) ? 'page' : undefined}>SERVICES</a>
 							<a class="nav-wide" href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
 							<a class="nav-wide" href={`${base}/about/`} aria-current={currentPath.startsWith(`${base}/about/`) ? 'page' : undefined}>ABOUT</a>
-							<details class="nav-more">
+							<details class="nav-more" aria-current={currentPath.startsWith(`${base}/inspection/`) || (currentPath.startsWith(`${base}/about/`)) ? 'page' : undefined}>
 								<summary>More</summary>
 								<div class="nav-more-list">
 									<a href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
@@ -70,7 +71,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 								rent.setAttribute('aria-current', 'page');
 							})();
 						</script>
-						<a class="header-cta" href={currentPath === `${base}/` ? '#inventory' : `${base}/`}>Shop verified bikes <span aria-hidden="true">↗</span></a>
+						<a class="header-cta" href={whatsappHref("Hi VO2 Bikes!")} target="_blank" rel="noopener noreferrer">Contact Us <span aria-hidden="true">↗</span></a>
 					</header>
 					<main>
 						<slot />
@@ -101,7 +102,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			</body>
 		</html>
 
-		<style is:global>
+		<style is:global define:vars={{ parsedBg: `#090d10 url("${bg_url}") center 42% / cover no-repeat` }}>
 			:root {
 				font-family: 'DM Sans', sans-serif;
 				color: #f1f7f8;
@@ -117,6 +118,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				/* One shared height for every page hero, so the fixed background
 				   image is framed identically on every page. */
 				--hero-band-min: min(700px, calc(100svh - 88px));
+				--hero-bg: var(--parsedBg);
 			}
 			/* Every top-level page hero uses this band, so the transparent area
 			   above the first opaque section is the same height everywhere. */
@@ -157,7 +159,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			.wordmark-mark {
 				display: grid;
 				place-items: center;
-				width: 190px;
+				width: 150px;
 				height: 50px;
 				aspect-ratio: 1;
 				/* border: 1px solid var(--signal); */
@@ -165,6 +167,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				font-family: 'Barlow Condensed', sans-serif;
 				font-size: 1.25rem;
 				font-weight: 700;
+				margin-left: 3vw;
 			}
 			.wordmark-mark span { color: var(--paper); }
 			.wordmark-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.75rem; font-weight: 700; line-height: 1.05; letter-spacing: 0.04em;  }
@@ -185,7 +188,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			.nav-more-list { position: absolute; top: calc(100% + 0.55rem); right: 0; z-index: 10; display: grid; min-width: 190px; padding: 0.4rem; border: 1px solid var(--line); background: rgba(8, 12, 15, 0.98); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); }
 			.nav-more-list a { padding: 0.7rem 0.85rem; color: #d7e2e4; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; text-decoration: none; }
 			.nav-more-list a::after { display: none; }
-			.nav-more-list a:hover, .nav-more-list a[aria-current='page'] { color: var(--paper); background: rgba(241, 247, 248, 0.07); }
+			.nav-more-list a:hover, .nav-more-list a[aria-current='page'] { color: var(--paper); background: var(--line); }
 			.header-cta, .button-primary {
 				display: inline-flex;
 				align-items: center;
@@ -233,6 +236,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				.primary-nav a, .nav-more summary { font-size: 0.68rem; }
 				.nav-wide { display: none; }
 				.nav-more { display: block; }
+				.nav-more[aria-current = 'page']::after {position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: var(--signal); content: ''; transform: scaleX(1); transform-origin: left; transition: transform 160ms ease; }
 				.site-footer { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
 			}
 			@media (prefers-reduced-motion: reduce) {
