@@ -16,7 +16,12 @@ export async function getStaticPaths() {
 }
 
 const { bike } = Astro.props;
-bike.gallery = [bike.image, ...bike.gallery];
+const gallery = [bike.image, ...bike.gallery];
+const purchaseMessage = `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}) listed at ${bike.priceLabel}. Is it still available?`;
+// The rental fleet links here with ?mode=rent. This page is prerendered as a
+// single URL, so the rental message is swapped in at runtime by the inline
+// script below the product layout.
+const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.year}). Could you share the rental details and availability?`;
 ---
 
 <Layout title={`${bike.name} | VO2 Bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by VO2 Bikes.`}>
@@ -27,7 +32,7 @@ bike.gallery = [bike.image, ...bike.gallery];
 	<section class="product-layout">
 		<section class="product-gallery" aria-label={`${bike.name} photos`}>
 			<div class="gallery-thumbs" aria-label={`${bike.name} photo thumbnails`}>
-				{bike.gallery.map((image, index) => (
+				{gallery.map((image, index) => (
 					<button
 						type="button"
 						class:list={['thumb', { 'is-active': index === 0 }]}
@@ -48,7 +53,7 @@ bike.gallery = [bike.image, ...bike.gallery];
 					fetchpriority="high"
 				/>
 				<div class="magnifier" aria-hidden="true"></div>
-				<figcaption class="gallery-count">01 / 03</figcaption>
+				<figcaption class="gallery-count">01 / {String(gallery.length).padStart(2, '0')}</figcaption>
 			</figure>
 		</section>
 
@@ -62,10 +67,27 @@ bike.gallery = [bike.image, ...bike.gallery];
 				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
 			</div>
 			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
-			<a class="button-primary enquiry-button" href={whatsappHref(`Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}) listed at ${bike.priceLabel}. Is it still available?`)} target="_blank" rel="noopener noreferrer">Enquire about this bike <span aria-hidden="true">↗</span></a>
+			{bike.available ? (
+				<a class="button-primary enquiry-button" href={whatsappHref(purchaseMessage)} data-rent-href={whatsappHref(rentalMessage)} target="_blank" rel="noopener noreferrer">Enquire about this bike <span aria-hidden="true">↗</span></a>
+			) : (
+				<span class="button-primary enquiry-button is-disabled" aria-disabled="true">Sold out</span>
+			)}
 			<a class="inspection-link" href="#inspection">Read the full inspection <span aria-hidden="true">↓</span></a>
 		</aside>
 	</section>
+
+	<script is:inline>
+		// Rentals reuse this prerendered page via ?mode=rent, so the URL query is
+		// the only place the rental context exists. Runs inline (synchronously)
+		// so the link never offers the purchase message in rental mode.
+		(() => {
+			if (new URLSearchParams(location.search).get('mode') !== 'rent') return;
+			const button = document.querySelector('[data-rent-href]');
+			const href = button?.getAttribute('data-rent-href');
+			if (!button || !href) return;
+			button.setAttribute('href', href);
+		})();
+	</script>
 
 	<section class="spec-section" aria-labelledby="spec-title">
 		<div class="section-heading"><div><p class="eyebrow">Bike details</p><h2 id="spec-title">The <span>spec.</span></h2></div><p>{bike.specification}</p></div>
@@ -160,8 +182,12 @@ bike.gallery = [bike.image, ...bike.gallery];
 	.breadcrumbs a { color: var(--paper); text-decoration-color: var(--signal); text-underline-offset: 3px; }
 	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 4rem; }
 	.product-gallery { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 0.6rem; align-items: start; min-width: 0; }
-	.gallery-thumbs { display: flex; flex-direction: column; gap: 0.6rem; }
-	.thumb { display: block; width: 100%; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
+	/* Thumbnail strip: a fixed-height scroll area so the gallery keeps a stable
+	   height whatever the photo count. Thumbs hold their 4:3 ratio and overflow
+	   the strip rather than being squashed by the default flex-shrink. */
+	.gallery-thumbs { display: flex; flex-direction: column; gap: 0.6rem; height: 400px; overflow-x: hidden; overflow-y: auto; scroll-behavior: smooth; scrollbar-width: none; }
+	.gallery-thumbs::-webkit-scrollbar { display: none; }
+	.thumb { display: block; flex: 0 0 auto; width: 100%; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
 	.thumb:hover { border-color: var(--muted); }
 	.thumb.is-active, .thumb:focus-visible { outline: none; border-color: var(--signal); }
 	.thumb:not(.is-active) { opacity: 0.78; }
@@ -189,6 +215,7 @@ bike.gallery = [bike.image, ...bike.gallery];
 	.score-track { display: block; height: 4px; margin: 0.4rem 0 1.4rem; background: rgba(226, 242, 244, 0.14); }
 	.score-track > span { display: block; height: 100%; background: var(--signal); }
 	.enquiry-button { width: 100%; }
+	.enquiry-button.is-disabled, .enquiry-button.is-disabled:hover { border-color: var(--line); background: transparent; color: var(--muted); cursor: not-allowed; }
 	.inspection-link { display: block; margin-top: 1rem; color: var(--paper); font-size: 0.7rem; text-align: center; text-decoration-color: var(--signal); text-underline-offset: 4px; }
 	.inspection-link span { margin-left: 0.35rem; color: var(--signal); }
 	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); }
@@ -213,5 +240,15 @@ bike.gallery = [bike.image, ...bike.gallery];
 	.check-points small { color: var(--muted); font-size: 0.65rem; }
 	.report-note { max-width: 1200px; margin: 1.4rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
 	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; } .product-summary { position: static; } }
-	@media (max-width: 600px) { .product-gallery { grid-template-columns: 1fr; } .gallery-thumbs { flex-direction: row; } .thumb { flex: 1; } .product-layout { padding-right: 1rem; padding-left: 1rem; } .spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .section-heading { align-items: start; flex-direction: column; gap: 0.8rem; } }
+	@media (max-width: 600px) {
+		.product-gallery { grid-template-columns: 1fr; }
+		/* Same scroll behaviour as the desktop strip, just horizontal instead of
+		   vertical: auto height (no 400px row), thumbs sized by their 4:3 ratio,
+		   and the row scrolls sideways once the photos stop fitting. */
+		.gallery-thumbs { flex-direction: row; align-items: flex-start; height: auto; overflow-x: auto; overflow-y: hidden; }
+		.thumb { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
+		.product-layout { padding-right: 1rem; padding-left: 1rem; }
+		.spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
+	}
 </style>

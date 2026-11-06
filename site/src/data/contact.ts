@@ -5,7 +5,7 @@
 //     the "Book a service" link and the footer links all read from here.
 
 /** WhatsApp number in international format, digits only (no "+", spaces or leading zeros). */
-export const whatsappNumber = '917276393713'; // TODO: real WhatsApp number
+export const whatsappNumber = '919370343713'; // TODO: real WhatsApp number
 
 /** Instagram page URL. */
 export const instagramUrl = 'https://www.instagram.com/your-handle/'; // TODO: real Instagram page

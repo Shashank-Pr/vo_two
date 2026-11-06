@@ -18,7 +18,7 @@ const countLabel = isRent ? 'bikes to rent' : 'verified bikes';
 const unavailableLabel = isRent ? 'UNAVAILABLE' : 'SOLD OUT';
 const enquiryMessage = (bike: Bicycle) =>
 	isRent
-		? `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.year}). Is it available?`
+		? `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.year}). Could you share the rental details and availability?`
 		: `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}). Is it still available?`;
 
 /** Detail links carry the view mode so the nav can highlight the right tab. */
@@ -76,7 +76,11 @@ const detailHref = (bike: Bicycle) => `${base}/products/${bike.slug}/${isRent ? 
 					<summary>Inspection breakdown</summary>
 					<ul>{bike.checks.map((check) => <li><span>{check.name}</span><strong>{check.score}<small>/{check.max}</small></strong></li>)}</ul>
 				</details>
-				<a class="enquire-link" href={whatsappHref(enquiryMessage(bike))} target="_blank" rel="noopener noreferrer">Ask about this bike <span aria-hidden="true">↗</span></a>
+				{bike.available ? (
+					<a class="enquire-link" href={whatsappHref(enquiryMessage(bike))} target="_blank" rel="noopener noreferrer">Ask about this bike <span aria-hidden="true">↗</span></a>
+				) : (
+					<span class="enquire-link is-disabled" aria-disabled="true">{unavailableLabel}</span>
+				)}
 			</div>
 		</article>
 	))}
@@ -164,6 +168,7 @@ const detailHref = (bike: Bicycle) => `${base}/products/${bike.slug}/${isRent ? 
 	.inspection-report li small { color: var(--muted); font-size: 0.58rem; }
 	.enquire-link { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.6rem; padding-top: 0.7rem; border-top: 1px solid var(--line); color: var(--paper); font-size: 0.68rem; font-weight: 700; text-decoration-color: var(--signal); text-underline-offset: 4px; }
 	.enquire-link span { color: var(--signal); }
+	.enquire-link.is-disabled { color: var(--muted); cursor: not-allowed; }
 	.empty-state { max-width: 1440px; margin: 2rem auto; padding: 2rem; border: 1px dashed var(--line); color: var(--muted); text-align: center; }
 	.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 	@keyframes card-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
