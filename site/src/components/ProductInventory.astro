@@ -22,7 +22,7 @@ const enquiryMessage = (bike: Bicycle) =>
 		: `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}). Is it still available?`;
 
 /** Detail links carry the view mode so the nav can highlight the right tab. */
-const detailHref = (bike: Bicycle) => `${base}/products/${bike.slug}/${isRent ? '?mode=rent' : ''}`;
+const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '?mode=rent' : ''}`;
 ---
 <div class="inventory-tools" aria-label="Filter bicycle inventory">
 	<label class="search-field">

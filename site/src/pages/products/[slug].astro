@@ -26,7 +26,7 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 
 <Layout title={`${bike.name} | VO2 Bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by VO2 Bikes.`}>
 	<nav class="breadcrumbs" aria-label="Breadcrumb">
-		<a href={`${base}/`}>Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
+		<a href={`${base}`}>Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
 	</nav>
 	<style is:inline set:html={inlineStyles}></style>
 	<section class="product-layout">

@@ -37,22 +37,22 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			<body>
 				<div class="site-shell">
 					<header class="site-header">
-						<a class="wordmark" href={`${base}/`} aria-label="vo2bikes home">
+						<a class="wordmark" href={`${base}`} aria-label="vo2bikes home">
 							<img class="wordmark-mark" aria-hidden="true" src={`${Logo.src}`}>
 						</a>
 						<nav class="primary-nav" aria-label="Main navigation">
-							<a data-nav="buy" href={`${base}/`} aria-current={currentPath === `${base}/` || currentPath.startsWith(`${base}/products/`) ? 'page' : undefined}>BUY BIKES</a>
-							<a href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
-							<a data-nav="rent" href={`${base}/rent/`} aria-current={currentPath.startsWith(`${base}/rent/`) ? 'page' : undefined}>RENT BIKES</a>
-							<a href={`${base}/services/`} aria-current={currentPath.startsWith(`${base}/services/`) ? 'page' : undefined}>SERVICES</a>
-							<a class="nav-wide" href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
-							<a class="nav-wide" href={`${base}/about/`} aria-current={currentPath.startsWith(`${base}/about/`) ? 'page' : undefined}>ABOUT</a>
-							<details class="nav-more" aria-current={currentPath.startsWith(`${base}/inspection/`) || (currentPath.startsWith(`${base}/about/`)) ? 'page' : undefined}>
+							<a data-nav="buy" href={`${base}`} aria-current={currentPath === `${base}` || currentPath.startsWith(`${base}products/`) ? 'page' : undefined}>BUY BIKES</a>
+							<a href={`${base}sell/`} aria-current={currentPath.startsWith(`${base}sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
+							<a data-nav="rent" href={`${base}rent/`} aria-current={currentPath.startsWith(`${base}rent/`) ? 'page' : undefined}>RENT BIKES</a>
+							<a href={`${base}services/`} aria-current={currentPath.startsWith(`${base}services/`) ? 'page' : undefined}>SERVICES</a>
+							<a class="nav-wide" href={`${base}inspection/`} aria-current={currentPath.startsWith(`${base}inspection/`) ? 'page' : undefined}>INSPECTION</a>
+							<a class="nav-wide" href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>ABOUT</a>
+							<details class="nav-more" aria-current={currentPath.startsWith(`${base}inspection/`) || (currentPath.startsWith(`${base}about/`)) ? 'page' : undefined}>
 								<summary>More</summary>
 								<div class="nav-more-list">
-									<a href={`${base}/inspection/`} aria-current={currentPath.startsWith(`${base}/inspection/`) ? 'page' : undefined}>INSPECTION</a>
-									<!-- <a href={`${base}/sell/`} aria-current={currentPath.startsWith(`${base}/sell/`) ? 'page' : undefined}>Sell your bike</a> -->
-									<a href={`${base}/about/`} aria-current={currentPath.startsWith(`${base}/about/`) ? 'page' : undefined}>About</a>
+									<a href={`${base}inspection/`} aria-current={currentPath.startsWith(`${base}inspection/`) ? 'page' : undefined}>INSPECTION</a>
+									<!-- <a href={`${base}sell/`} aria-current={currentPath.startsWith(`${base}sell/`) ? 'page' : undefined}>Sell your bike</a> -->
+									<a href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>About</a>
 								</div>
 							</details>
 						</nav>
@@ -77,7 +77,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 						<slot />
 					</main>
 					<footer class="site-footer">
-						<a class="footer-wordmark" href={`${base}/`}>VO<sub>2</sub> Bikes <span>/ RIDE. VERIFIED</span></a>
+						<a class="footer-wordmark" href={`${base}`}>VO<sub>2</sub> Bikes <span>/ RIDE. VERIFIED</span></a>
 						<p>Better bikes. Better backed.</p>
 						<div class="footer-contact">
 							<a href={`mailto:${contactEmail}`}>{contactEmail}</a>
