@@ -13,6 +13,5 @@ export default defineConfig({
       useCdn: false,
     }),
   ],
-  site: 'https://vo2bikes.com',
-  base: ''
+  site: 'https://vo2bikes.com'
 });
