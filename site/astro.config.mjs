@@ -13,6 +13,6 @@ export default defineConfig({
       useCdn: false,
     }),
   ],
-  site: 'https://shashank-pr.github.io',
-  base: '/vo_two'
+  site: 'https://vo2bikes.com',
+  base: ''
 });
