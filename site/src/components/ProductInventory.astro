@@ -15,6 +15,19 @@ const bicycles = supplied ?? (await getBicycles());
 
 const isRent = mode === 'rent';
 const countLabel = isRent ? 'bikes to rent' : 'verified bikes';
+
+/** Default "featured" order: inspected bikes first, grouped by bike type. */
+const categoryOrder = ['road', 'climbing', 'time trial', 'endurance', 'gravel'];
+const typeRank = (bike: Bicycle) => {
+	const index = categoryOrder.indexOf(bike.category.toLowerCase());
+	return index === -1 ? categoryOrder.length : index;
+};
+const featured = [...bicycles].sort(
+	(a, b) =>
+		Number(b.available) - Number(a.available) ||
+		typeRank(a) - typeRank(b) ||
+		a.name.localeCompare(b.name),
+);
 const unavailableLabel = isRent ? 'UNAVAILABLE' : 'SOLD OUT';
 const enquiryMessage = (bike: Bicycle) =>
 	isRent
@@ -24,7 +37,7 @@ const enquiryMessage = (bike: Bicycle) =>
 /** Detail links carry the view mode so the nav can highlight the right tab. */
 const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '?mode=rent' : ''}`;
 ---
-<div class="inventory-tools" aria-label="Filter bicycle inventory">
+<div class="inventory-tools" aria-label="Filter and sort bicycle inventory">
 	<label class="search-field">
 		<span class="visually-hidden">Search pre-owned bikes</span>
 		<span class="search-icon" aria-hidden="true">⌕</span>
@@ -49,14 +62,25 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 			<option value="95">95 and above</option>
 		</select>
 	</label>
-	<p class="result-count" aria-live="polite"><span id="bike-count">{bicycles.length}</span> {countLabel}</p>
+	<label class="select-field">
+		<span class="visually-hidden">Sort bicycles</span>
+		<select id="bike-sort">
+			<option value="featured">Sort: featured</option>
+			<option value="price-asc">Price: low to high</option>
+			<option value="price-desc">Price: high to low</option>
+			<option value="score-desc">Score: high to low</option>
+			<option value="year-desc">Year: newest first</option>
+			<option value="year-asc">Year: oldest first</option>
+		</select>
+	</label>
+	<p class="result-count" aria-live="polite"><span id="bike-count">{featured.length}</span> {countLabel}</p>
 </div>
 
 <div class="bike-grid" id="bike-grid">
-	{bicycles.map((bike) => (
-		<article class="bike-card" data-name={`${bike.name} ${bike.category}`.toLowerCase()} data-category={bike.category} data-score={bike.score}>
+	{featured.map((bike) => (
+		<article class="bike-card" data-name={`${bike.name} ${bike.category}`.toLowerCase()} data-category={bike.category} data-score={bike.score} data-price={bike.price} data-year={bike.year}>
 			<a class="bike-photo" href={detailHref(bike)} aria-label={`View details for ${bike.name}`}>
-				<img src={urlFor(bike.image).width(900).height(700).fit('crop').url()} alt={bike.alt} loading="lazy" />
+				<img src={urlFor(bike.image).width(900).url()} alt={bike.alt} loading="lazy" />
 				<span class="bike-year">{bike.year}</span>
 				{bike.available ? (
 					<span class="verified-tag"><span aria-hidden="true">✓</span> INSPECTED</span>
@@ -67,10 +91,19 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 			<div class="bike-details">
 				<div class="bike-title-row">
 					<div><p class="bike-category">PRE-OWNED <span>·</span> {bike.category}</p><h3><a class="bike-title-link" href={detailHref(bike)}>{bike.name}</a></h3></div>
+					<div class="bike-price">
+						{isRent ? (
+							<abbr class="price-variable" title="Rental prices vary by duration and are subject to change.">Subject to change</abbr>
+						) : (
+							<strong>{bike.priceLabel}</strong>
+						)}
+					</div>
+				</div>
+				<div class="bike-meta">
+					<span>Inspection score</span>
 					<div class="inspection-score" aria-label={`Inspection score ${bike.score} out of 100`}><strong>{bike.score}</strong><span>/100</span></div>
 				</div>
 				<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
-				<div class="bike-meta"><span>{bike.distance} ridden</span><strong>{bike.priceLabel}</strong></div>
 				<a class="details-link" href={detailHref(bike)}>View bike details <span aria-hidden="true">↗</span></a>
 				<details class="inspection-report">
 					<summary>Inspection breakdown</summary>
@@ -95,6 +128,30 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	const count = document.querySelector<HTMLElement>('#bike-count');
 	const emptyState = document.querySelector<HTMLElement>('#empty-state');
 
+	const sort = document.querySelector<HTMLSelectElement>('#bike-sort');
+	const grid = document.querySelector<HTMLElement>('#bike-grid');
+	const originalOrder = new Map(cards.map((card, index) => [card, index]));
+	const serverOrder = (a: HTMLElement, b: HTMLElement) => originalOrder.get(a)! - originalOrder.get(b)!;
+
+	/** Primary comparators; ties fall back to the order the server rendered. */
+	const comparators: Record<string, (a: HTMLElement, b: HTMLElement) => number> = {
+		// The server renders the default order (inspected first, grouped by type).
+		featured: serverOrder,
+		'price-asc': (a, b) => Number(a.dataset.price) - Number(b.dataset.price),
+		'price-desc': (a, b) => Number(b.dataset.price) - Number(a.dataset.price),
+		'score-desc': (a, b) => Number(b.dataset.score) - Number(a.dataset.score),
+		'year-desc': (a, b) => Number(b.dataset.year) - Number(a.dataset.year),
+		'year-asc': (a, b) => Number(a.dataset.year) - Number(b.dataset.year),
+	};
+
+	function sortInventory() {
+		if (!grid) return;
+		const primary = comparators[sort?.value ?? 'featured'] ?? comparators.featured;
+		[...cards]
+			.sort((a, b) => primary(a, b) || serverOrder(a, b))
+			.forEach((card) => grid.append(card));
+	}
+
 	function updateInventory() {
 		const query = search?.value.trim().toLowerCase() ?? '';
 		const selectedCategory = category?.value ?? 'all';
@@ -111,11 +168,15 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 
 		if (count) count.textContent = String(visibleCount);
 		if (emptyState) emptyState.hidden = visibleCount > 0;
+		sortInventory();
 	}
 
 	search?.addEventListener('input', updateInventory);
 	category?.addEventListener('change', updateInventory);
 	minimumScore?.addEventListener('change', updateInventory);
+	sort?.addEventListener('change', updateInventory);
+
+	updateInventory();
 </script>
 
 <style>
@@ -133,16 +194,16 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	.bike-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; max-width: 1440px; margin: 0 auto; }
 	.bike-card { min-width: 0; border: 1px solid rgba(226, 242, 244, 0.16); background: var(--panel); animation: card-arrive 420ms ease both; }
 	.bike-card[hidden] { display: none; }
-	.bike-photo { position: relative; display: block; height: 220px; overflow: hidden; background: #151d20; }
+	.bike-photo { position: relative; display: block; height: auto; aspect-ratio: 4 / 3; overflow: hidden; background: #151d20; }
 	.bike-photo::after { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(5, 9, 12, 0.58)); content: ''; pointer-events: none; }
-	.bike-photo img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.76); transition: transform 350ms ease, filter 350ms ease; }
+	.bike-photo img { width: 100%; height: 100%; object-fit: contain; filter: saturate(0.76); transition: transform 350ms ease, filter 350ms ease; }
 	.bike-card:hover .bike-photo img { filter: saturate(1); transform: scale(1.04); }
 	.bike-year { position: absolute; z-index: 1; bottom: 0.8rem; left: 0.9rem; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; }
 	.verified-tag { position: absolute; z-index: 1; top: 0.8rem; left: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.55rem; border: 1px solid rgba(131, 229, 220, 0.65); background: rgba(7, 13, 15, 0.86); color: var(--signal); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; }
 	.verified-tag span { font-size: 0.75rem; }
 	.verified-tag.sold-out { border-color: rgba(255, 107, 107, 0.55); color: #ff6b6b; }
 	.bike-details { padding: 1rem 1rem 0.85rem; }
-	.bike-title-row { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+	.bike-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.4rem; }
 	.bike-category { margin: 0 0 0.35rem; color: var(--signal); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 	.bike-category span { color: var(--muted); }
 	.bike-title-row h3 { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; line-height: 1; text-transform: uppercase; }
@@ -153,8 +214,10 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	.inspection-score span { color: var(--muted); font-size: 0.56rem; }
 	.score-track { height: 3px; margin-top: 0.8rem; background: rgba(226, 242, 244, 0.14); }
 	.score-track span { display: block; height: 100%; background: var(--signal); }
-	.bike-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.8rem; padding-top: 0.75rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.65rem; }
-	.bike-meta strong { color: var(--paper); font-size: 0.8rem; white-space: nowrap; }
+	.bike-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-top: 0.8rem; padding-top: 0.75rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.65rem; }
+	.bike-price { display: flex; align-items: baseline; justify-content: flex-end; text-align: right; }
+	.bike-price strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.55rem; line-height: 1; white-space: nowrap; }
+	.price-variable { color: var(--muted); font-size: 0.66rem; font-weight: 700; cursor: help; }
 	.details-link { display: flex; align-items: center; justify-content: space-between; margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); color: var(--paper); font-size: 0.68rem; font-weight: 700; text-decoration: none; }
 	.details-link span { color: var(--signal); }
 	.inspection-report { margin-top: 0.75rem; border-top: 1px solid var(--line); }
@@ -183,21 +246,23 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	@media (max-width: 640px) {
 		.inventory-tools { gap: 0.5rem; padding: 0.55rem; }
 		select { font-size: 0.66rem; padding-right: 1.5rem; }
+		.select-field { flex: 1 1 calc(50% - 0.25rem); }
 		.result-count { flex-basis: 100%; }
 		.bike-grid { gap: 0.55rem; }
-		.bike-photo { height: auto; aspect-ratio: 4 / 3; }
 		.bike-year { bottom: 0.5rem; left: 0.55rem; font-size: 1rem; }
 		.verified-tag { top: 0.5rem; left: 0.5rem; padding: 0.28rem 0.4rem; font-size: 0.48rem; letter-spacing: 0.06em; }
 		.verified-tag span { font-size: 0.6rem; }
 		.bike-details { padding: 0.6rem 0.6rem 0.55rem; }
-		.bike-title-row { align-items: flex-start; flex-wrap: wrap; gap: 0.35rem; }
+		.bike-title-row { align-items: flex-end; flex-wrap: wrap; gap: 0.35rem; }
 		.bike-category { margin-bottom: 0.25rem; font-size: 0.48rem; letter-spacing: 0.06em; }
 		.bike-title-row h3 { font-size: 0.98rem; }
 		.inspection-score strong { font-size: 1rem; }
 		.inspection-score span { font-size: 0.46rem; }
 		.score-track { margin-top: 0.5rem; }
 		.bike-meta { flex-direction: column; align-items: flex-start; gap: 0.15rem; margin-top: 0.5rem; padding-top: 0.5rem; font-size: 0.55rem; }
-		.bike-meta strong { font-size: 0.68rem; }
+		.bike-price { margin-left: auto; }
+		.bike-price strong { font-size: 1.05rem; }
+		.bike-price .price-variable { font-size: 0.55rem; }
 		.details-link, .enquire-link { margin-top: 0.5rem; padding-top: 0.5rem; font-size: 0.58rem; }
 		.inspection-report { margin-top: 0.5rem; }
 		.inspection-report summary { padding: 0.55rem 0 0.1rem; font-size: 0.56rem; }

@@ -24,6 +24,11 @@ interface InspectionScoreRecord {
 	area: InspectionCheckRecord | null;
 }
 
+interface SpecItemRecord {
+	label: string;
+	value: string;
+}
+
 interface SanityBicycleRecord {
 	slug: string;
 	name: string;
@@ -31,18 +36,17 @@ interface SanityBicycleRecord {
 	category: string;
 	condition: string;
 	price: number;
-	distance: string;
-	specification: string;
 	image: SanityImageSource;
 	alt: string;
 	available: boolean;
 	/** May be absent on older documents; treated as rentable when missing. */
 	isRentable?: boolean;
 	gallery: SanityImageSource[];
-	frame: string;
-	groupset: string;
-	wheels: string;
 	size: string;
+	/** Optional on documents created before the weight field existed. */
+	weight?: string;
+	/** Additional key/value specs; optional so older documents keep rendering. */
+	specList?: SpecItemRecord[];
 	description: string;
 	inspectionScores: InspectionScoreRecord[];
 }
@@ -73,17 +77,14 @@ const BICYCLES_QUERY = defineQuery(`
 		category,
 		condition,
 		price,
-		distance,
-		specification,
 		image { asset, hotspot, crop },
 		alt,
 		available,
 		isRentable,
 		gallery[]{ asset, hotspot, crop },
-		frame,
-		groupset,
-		wheels,
 		size,
+		weight,
+		specList[]{ label, value },
 		description,
 		inspectionScores[]{
 			points,

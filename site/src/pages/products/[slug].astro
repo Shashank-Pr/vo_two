@@ -17,6 +17,7 @@ export async function getStaticPaths() {
 
 const { bike } = Astro.props;
 const gallery = [bike.image, ...bike.gallery];
+const specs = bike.specList ?? [];
 const purchaseMessage = `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}) listed at ${bike.priceLabel}. Is it still available?`;
 // The rental fleet links here with ?mode=rent. This page is prerendered as a
 // single URL, so the rental message is swapped in at runtime by the inline
@@ -39,16 +40,16 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 						aria-label={`Show name} photo ${index + 1}`}
 						aria-current={index === 0 ? 'true' : undefined}
 						data-index={index}
-						data-src={urlFor(image).width(1200).height(900).fit('crop').url()}
-						data-zoom={urlFor(image).width(2400).height(1800).fit('crop').url()}
+						data-src={urlFor(image).width(1200).url()}
+						data-zoom={urlFor(image).width(2400).url()}
 					>
-						<img src={urlFor(image).width(140).height(105).fit('crop').url()} alt="" loading="lazy" />
+						<img src={urlFor(image).width(180).url()} alt="" loading="lazy" />
 					</button>
 				))}
 			</div>
 			<figure class="gallery-canvas">
 				<img
-					src={urlFor(bike.gallery[0]).width(1200).height(900).fit('crop').url()}
+					src={urlFor(gallery[0]).width(1200).url()}
 					alt={`${bike.name}, primary product view`}
 					fetchpriority="high"
 				/>
@@ -63,7 +64,7 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			<p class="condition">{bike.condition}</p>
 			<p class="product-description">{bike.description}</p>
 			<div class="price-score">
-				<div><span>Asking price</span><strong>{bike.priceLabel}</strong></div>
+				<div data-price-line data-rent-label="Rental price" data-rent-price="Subject to change"><span data-price-label>Asking price</span><strong data-price-value>{bike.priceLabel}</strong></div>
 				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
 			</div>
 			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
@@ -79,26 +80,46 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	<script is:inline>
 		// Rentals reuse this prerendered page via ?mode=rent, so the URL query is
 		// the only place the rental context exists. Runs inline (synchronously)
-		// so the link never offers the purchase message in rental mode.
+		// so the link and price never show the purchase version in rental mode.
 		(() => {
 			if (new URLSearchParams(location.search).get('mode') !== 'rent') return;
+
 			const button = document.querySelector('[data-rent-href]');
 			const href = button?.getAttribute('data-rent-href');
-			if (!button || !href) return;
-			button.setAttribute('href', href);
+			if (button && href) button.setAttribute('href', href);
+
+			// Rental rates vary with duration, so the asking price is replaced by
+			// a note instead of a figure.
+			const line = document.querySelector('[data-price-line]');
+			const label = line?.querySelector('[data-price-label]');
+			const value = line?.querySelector('[data-price-value]');
+			if (!line || !value) return;
+			if (label) label.textContent = line.getAttribute('data-rent-label');
+			const note = document.createElement('abbr');
+			note.className = 'price-variable';
+			note.title = 'Rental prices vary by duration and are subject to change.';
+			note.textContent = line.getAttribute('data-rent-price') ?? 'Subject to change';
+			value.replaceWith(note);
 		})();
 	</script>
 
-	<section class="spec-section" aria-labelledby="spec-title">
-		<div class="section-heading"><div><p class="eyebrow">Bike details</p><h2 id="spec-title">The <span>spec.</span></h2></div><p>{bike.specification}</p></div>
+	<section class="spec-section" aria-labelledby={specs.length > 0 ? 'spec-title' : 'spec-details-title'}>
+		<p class="eyebrow spec-details-title" id="spec-details-title">Bike details</p>
 		<dl class="spec-grid">
-			<div><dt>Frame</dt><dd>{bike.frame}</dd></div>
-			<div><dt>Groupset</dt><dd>{bike.groupset}</dd></div>
-			<div><dt>Wheels</dt><dd>{bike.wheels}</dd></div>
 			<div><dt>Size</dt><dd>{bike.size}</dd></div>
-			<div><dt>Distance ridden</dt><dd>{bike.distance}</dd></div>
 			<div><dt>Condition</dt><dd>{bike.condition}</dd></div>
+			<div><dt>Weight</dt><dd>{bike.weight || '—'}</dd></div>
 		</dl>
+		{specs.length > 0 && (
+			<>
+				<div class="section-heading spec-list-heading"><div><h2 id="spec-title">The <span>spec.</span></h2></div></div>
+				<ul class="spec-list" aria-label="Additional specifications">
+					{specs.map((spec) => (
+						<li><span class="spec-label">{spec.label}:</span><span class="spec-value">{spec.value}</span></li>
+					))}
+				</ul>
+			</>
+		)}
 	</section>
 
 	<section class="inspection-section" id="inspection" aria-labelledby="inspection-title">
@@ -141,19 +162,31 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 
 			const lensHalf = Math.round(lens.offsetWidth / 2);
 
-			const setLens = (x, y, width, height) => {
-				x = Math.min(Math.max(x, 0), width);
-				y = Math.min(Math.max(y, 0), height);
-				lens.style.left = `${x}px`;
-				lens.style.top = `${y}px`;
-				lens.style.backgroundSize = `${width * ZOOM}px ${height * ZOOM}px`;
+			/* The canvas is a fixed 4:3 block and the photo is contained inside it,
+			   so the visible image is letterboxed on two sides. Mirror that
+			   geometry here: the lens must track the photo, not the empty box. */
+			const setLens = (clientX, clientY) => {
+				const rect = canvas.getBoundingClientRect();
+				const naturalWidth = mainImage.naturalWidth || rect.width;
+				const naturalHeight = mainImage.naturalHeight || rect.height;
+				const scale = Math.min(rect.width / naturalWidth, rect.height / naturalHeight);
+				const shownWidth = naturalWidth * scale;
+				const shownHeight = naturalHeight * scale;
+				const offsetX = (rect.width - shownWidth) / 2;
+				const offsetY = (rect.height - shownHeight) / 2;
+
+				const x = Math.min(Math.max(clientX - rect.left - offsetX, 0), shownWidth);
+				const y = Math.min(Math.max(clientY - rect.top - offsetY, 0), shownHeight);
+
+				lens.style.left = `${x + offsetX}px`;
+				lens.style.top = `${y + offsetY}px`;
+				lens.style.backgroundSize = `${shownWidth * ZOOM}px ${shownHeight * ZOOM}px`;
 				lens.style.backgroundPosition = `${-(x * ZOOM) + lensHalf}px ${-(y * ZOOM) + lensHalf}px`;
 			};
 
 			const onMove = (event) => {
 				if (!lens.classList.contains('is-on')) return;
-				const rect = canvas.getBoundingClientRect();
-				setLens(event.clientX - rect.left, event.clientY - rect.top, rect.width, rect.height);
+				setLens(event.clientX, event.clientY);
 			};
 
 			thumbs.forEach((thumb) => {
@@ -183,8 +216,9 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 4rem; }
 	.product-gallery { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 0.6rem; align-items: start; min-width: 0; }
 	/* Thumbnail strip: a fixed-height scroll area so the gallery keeps a stable
-	   height whatever the photo count. Thumbs hold their 4:3 ratio and overflow
-	   the strip rather than being squashed by the default flex-shrink. */
+	   height whatever the photo count. Every thumb is the same 4:3 block and the
+	   photo is contained inside it (letterboxed, never cropped), so mixed
+	   portrait/landscape sets still line up. */
 	.gallery-thumbs { display: flex; flex-direction: column; gap: 0.6rem; height: 400px; overflow-x: hidden; overflow-y: auto; scroll-behavior: smooth; scrollbar-width: none; }
 	.gallery-thumbs::-webkit-scrollbar { display: none; }
 	.thumb { display: block; flex: 0 0 auto; width: 100%; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
@@ -192,9 +226,9 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.thumb.is-active, .thumb:focus-visible { outline: none; border-color: var(--signal); }
 	.thumb:not(.is-active) { opacity: 0.78; }
 	.thumb:not(.is-active):hover { opacity: 1; }
-	.thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+	.thumb img { display: block; width: 100%; height: 100%; object-fit: contain; }
 	.gallery-canvas { position: relative; margin: 0; overflow: hidden; background: #151d20; aspect-ratio: 4 / 3; cursor: crosshair; }
-	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: cover; }
+	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; }
 	.gallery-canvas.is-magnifying { cursor: none; }
 	.magnifier { position: absolute; left: 0; top: 0; width: clamp(120px, 24vw, 190px); aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(241, 247, 248, 0.95); box-shadow: 0 0 0 1px rgba(9, 13, 16, 0.7), 0 6px 24px rgba(0, 0, 0, 0.55); background-repeat: no-repeat; pointer-events: none; opacity: 0; transform: translate(-50%, -50%); transition: opacity 120ms ease; z-index: 2; }
 	.magnifier.is-on { opacity: 1; }
@@ -209,6 +243,7 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.price-score div { display: grid; gap: 0.35rem; }
 	.price-score span { color: var(--muted); font-size: 0.62rem; }
 	.price-score strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
+	.price-score .price-variable { color: var(--muted); font-size: 0.95rem; font-weight: 700; cursor: help; }
 	.price-score .score-summary { text-align: right; }
 	.score-summary strong { color: var(--signal); }
 	.score-summary small { margin-left: 0.15rem; color: var(--muted); font: 500 0.7rem 'DM Sans', sans-serif; }
@@ -223,10 +258,20 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.section-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
 	.section-heading h2 span { color: var(--signal); }
 	.section-heading > p { max-width: 360px; margin: 0; color: var(--muted); font-size: 0.75rem; line-height: 1.7; }
+	.spec-details-title { max-width: 1200px; margin: 0 auto 1.1rem; }
 	.spec-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 1200px; margin: 0 auto; border-top: 1px solid var(--line); }
 	.spec-grid div { padding: 1.2rem 1rem 1.2rem 0; border-bottom: 1px solid var(--line); }
 	.spec-grid dt { color: var(--muted); font-size: 0.63rem; }
 	.spec-grid dd { margin: 0.45rem 0 0; color: var(--paper); font-size: 0.82rem; }
+	/* Flexible key/value specs (anything beyond size, condition and weight),
+	   so bikes can list only the components that apply to them. */
+	.spec-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 3rem; max-width: 1200px; margin: 0 auto; padding: 0; list-style: none; }
+	.spec-list li { display: flex; align-items: flex-start; column-gap: 0.5rem; padding: 0.8rem 0; border-top: 1px solid var(--line); font-size: 0.8rem; line-height: 1.6; }
+	.spec-list li::before { flex: none; width: 5px; height: 5px; margin-top: 0.55em; background: var(--signal); content: ''; }
+	.spec-label { color: var(--muted); }
+	.spec-value { color: var(--paper); }
+	/* "The spec." sits between the size/condition/weight grid and the list. */
+	.spec-list-heading { margin: 2.6rem auto 1rem; }
 	.inspection-section { background: rgba(12, 17, 20, 0.98); }
 	.report-score { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 0.4rem; max-width: 1200px; margin: 0 auto; padding: 1rem 0; border-top: 1px solid var(--line); }
 	.report-score > strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 3.4rem; line-height: 1; }
@@ -243,12 +288,13 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	@media (max-width: 600px) {
 		.product-gallery { grid-template-columns: 1fr; }
 		/* Same scroll behaviour as the desktop strip, just horizontal instead of
-		   vertical: auto height (no 400px row), thumbs sized by their 4:3 ratio,
-		   and the row scrolls sideways once the photos stop fitting. */
+		   vertical: auto height (no 400px row), the same 4:3 thumbs sized by
+		   width, and the row scrolls sideways once the photos stop fitting. */
 		.gallery-thumbs { flex-direction: row; align-items: flex-start; height: auto; overflow-x: auto; overflow-y: hidden; }
 		.thumb { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
 		.product-layout { padding-right: 1rem; padding-left: 1rem; }
 		.spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		.spec-list { grid-template-columns: 1fr; }
 		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
 	}
 </style>
