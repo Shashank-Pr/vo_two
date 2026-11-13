@@ -32,21 +32,6 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	<style is:inline set:html={inlineStyles}></style>
 	<section class="product-layout">
 		<section class="product-gallery" aria-label={`${bike.name} photos`}>
-			<div class="gallery-thumbs" aria-label={`${bike.name} photo thumbnails`}>
-				{gallery.map((image, index) => (
-					<button
-						type="button"
-						class:list={['thumb', { 'is-active': index === 0 }]}
-						aria-label={`Show name} photo ${index + 1}`}
-						aria-current={index === 0 ? 'true' : undefined}
-						data-index={index}
-						data-src={urlFor(image).width(1200).url()}
-						data-zoom={urlFor(image).width(2400).url()}
-					>
-						<img src={urlFor(image).width(180).url()} alt="" loading="lazy" />
-					</button>
-				))}
-			</div>
 			<figure class="gallery-canvas">
 				<img
 					src={urlFor(gallery[0]).width(1200).url()}
@@ -56,6 +41,21 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 				<div class="magnifier" aria-hidden="true"></div>
 				<figcaption class="gallery-count">01 / {String(gallery.length).padStart(2, '0')}</figcaption>
 			</figure>
+			<div class="gallery-thumbs" aria-label={`${bike.name} photo thumbnails`}>
+				{gallery.map((image, index) => (
+					<button
+						type="button"
+						class:list={['thumb', { 'is-active': index === 0 }]}
+						aria-label={`Show ${bike.name} photo ${index + 1}`}
+						aria-current={index === 0 ? 'true' : undefined}
+						data-index={index}
+						data-src={urlFor(image).width(1200).url()}
+						data-zoom={urlFor(image).width(2400).url()}
+					>
+						<img src={urlFor(image).width(180).url()} alt="" loading="lazy" />
+					</button>
+				))}
+			</div>
 		</section>
 
 		<aside class="product-summary">
@@ -130,6 +130,20 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 
 			const pad = (n) => String(n).padStart(2, '0');
 
+			/* Keep the active thumbnail visible in the strip below the canvas. */
+			const reveal = (thumb) => {
+				const strip = thumb.parentElement;
+				if (!strip) return;
+				const stripRect = strip.getBoundingClientRect();
+				const thumbRect = thumb.getBoundingClientRect();
+				if (thumbRect.left < stripRect.left || thumbRect.right > stripRect.right) {
+					strip.scrollBy({
+						left: thumbRect.left - stripRect.left - (stripRect.width - thumbRect.width) / 2,
+						behavior: 'smooth',
+					});
+				}
+			};
+
 			const activate = (thumb) => {
 				thumbs.forEach((t) => {
 					const active = t === thumb;
@@ -140,6 +154,7 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 				mainImage.src = thumb.dataset.src;
 				lens.style.backgroundImage = `url('${thumb.dataset.zoom}')`;
 				countEl.textContent = `${pad(Number(thumb.dataset.index) + 1)} / ${pad(thumbs.length)}`;
+				reveal(thumb);
 			};
 
 			const lensHalf = Math.round(lens.offsetWidth / 2);
@@ -176,6 +191,39 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 				thumb.addEventListener('click', () => activate(thumb));
 			});
 
+			/* Touch: a horizontal swipe on the main photo steps to the next or
+			   previous image. Vertical drags are ignored so the page still scrolls. */
+			let swipeStart = null;
+			canvas.addEventListener(
+				'touchstart',
+				(event) => {
+					swipeStart =
+						event.touches.length === 1
+							? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+							: null;
+				},
+				{ passive: true },
+			);
+			canvas.addEventListener('touchcancel', () => {
+				swipeStart = null;
+			}, { passive: true });
+			canvas.addEventListener(
+				'touchend',
+				(event) => {
+					if (!swipeStart) return;
+					const touch = event.changedTouches[0];
+					const dx = touch.clientX - swipeStart.x;
+					const dy = touch.clientY - swipeStart.y;
+					swipeStart = null;
+					if (Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy)) return;
+
+					const current = thumbs.findIndex((thumb) => thumb.classList.contains('is-active'));
+					const next = thumbs[dx < 0 ? current + 1 : current - 1];
+					if (next) activate(next);
+				},
+				{ passive: true },
+			);
+
 			canvas.addEventListener('mouseenter', (event) => {
 				lens.classList.add('is-on');
 				canvas.classList.add('is-magnifying');
@@ -196,14 +244,14 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 1.2rem clamp(1.25rem, 5vw, 5.5rem); color: var(--muted); font-size: 0.66rem; }
 	.breadcrumbs a { color: var(--paper); text-decoration-color: var(--signal); text-underline-offset: 3px; }
 	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 4rem; }
-	.product-gallery { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 0.6rem; align-items: start; min-width: 0; }
-	/* Thumbnail strip: a fixed-height scroll area so the gallery keeps a stable
-	   height whatever the photo count. Every thumb is the same 4:3 block and the
-	   photo is contained inside it (letterboxed, never cropped), so mixed
-	   portrait/landscape sets still line up. */
-	.gallery-thumbs { display: flex; flex-direction: column; gap: 0.6rem; height: 400px; overflow-x: hidden; overflow-y: auto; scroll-behavior: smooth; scrollbar-width: none; }
+	.product-gallery { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; align-items: start; min-width: 0; }
+	/* Thumbnail strip below the main canvas: one scrollable row, so any number of
+	   photos fits without changing the canvas height. Every thumb is the same 4:3
+	   block and the photo is contained inside it (letterboxed, never cropped), so
+	   mixed portrait/landscape sets still line up. */
+	.gallery-thumbs { display: flex; gap: 0.6rem; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: none; }
 	.gallery-thumbs::-webkit-scrollbar { display: none; }
-	.thumb { display: block; flex: 0 0 auto; width: 100%; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
+	.thumb { display: block; flex: 0 0 auto; width: 92px; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
 	.thumb:hover { border-color: var(--muted); }
 	.thumb.is-active, .thumb:focus-visible { outline: none; border-color: var(--signal); }
 	.thumb:not(.is-active) { opacity: 0.78; }
@@ -260,11 +308,6 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.report-note { max-width: 1200px; margin: 1.4rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
 	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; } .product-summary { position: static; } }
 	@media (max-width: 600px) {
-		.product-gallery { grid-template-columns: 1fr; }
-		/* Same scroll behaviour as the desktop strip, just horizontal instead of
-		   vertical: auto height (no 400px row), the same 4:3 thumbs sized by
-		   width, and the row scrolls sideways once the photos stop fitting. */
-		.gallery-thumbs { flex-direction: row; align-items: flex-start; height: auto; overflow-x: auto; overflow-y: hidden; }
 		.thumb { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
 		.product-layout { padding-right: 1rem; padding-left: 1rem; }
 		.spec-list { grid-template-columns: 1fr; }

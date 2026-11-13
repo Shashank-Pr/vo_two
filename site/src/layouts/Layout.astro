@@ -13,8 +13,9 @@ import { base } from 'astro:config/client';
 import Logo from '../assets/logo_combined_png.png';
 import backdrop from '../assets/logo3.webp';
 import instagramIcon from '../assets/insta.jpg';
+import facebookIcon from '../assets/facebook.svg';
 import whatsappIcon from '../assets/whatsapp.png';
-import { contactEmail, instagramUrl, whatsappHref } from '../data/contact';
+import { contactEmail, contactPhoneDisplay, callHref, facebookUrl, instagramUrl, whatsappHref } from '../data/contact';
 
 const bg_url = backdrop.src;
 const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`; 
@@ -71,7 +72,19 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 								rent.setAttribute('aria-current', 'page');
 							})();
 						</script>
-						<a class="header-cta" href={whatsappHref("Hi VO2 Bikes!")} target="_blank" rel="noopener noreferrer">Contact Us <span aria-hidden="true">↗</span></a>
+						<details class="header-contact">
+							<summary class="header-cta">Contact Us <span aria-hidden="true">↗</span></summary>
+							<div class="header-contact-list">
+								<a href={whatsappHref("Hi VO2 Bikes!")} target="_blank" rel="noopener noreferrer">
+									<span class="header-contact-label">WhatsApp</span>
+									<span class="header-contact-hint">Chat with us</span>
+								</a>
+								<a href={callHref}>
+									<span class="header-contact-label">Call</span>
+									<span class="header-contact-hint">{contactPhoneDisplay}</span>
+								</a>
+							</div>
+						</details>
 					</header>
 					<main>
 						<slot />
@@ -82,22 +95,33 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 						<div class="footer-contact">
 							<a href={`mailto:${contactEmail}`}>{contactEmail}</a>
 							<a class="footer-social" href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="vo2bikes on Instagram" title="Instagram"><img src={instagramIcon.src} alt="" width="26" height="26" loading="lazy" /></a>
+							<a class="footer-social" href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="vo2bikes on Facebook" title="Facebook"><img src={facebookIcon.src} alt="" width="26" height="26" loading="lazy" /></a>
 							<a class="footer-social" href={whatsappHref("Hi VO2 Bikes! I have a question about one of your bikes.")} target="_blank" rel="noopener noreferrer" aria-label="Message vo2bikes on WhatsApp" title="WhatsApp"><img src={whatsappIcon.src} alt="" width="26" height="26" loading="lazy" /></a>
 						</div>
 					</footer>
 				</div>
 				<script>
-					const navMore = document.querySelector<HTMLDetailsElement>('.nav-more');
-					if (navMore) {
-						const closeNavMore = () => navMore.removeAttribute('open');
+					/* Dropdowns in the header: close on outside click, Escape or link
+					   activation, and only one panel open at a time. */
+					const closeableMenus = [
+						...document.querySelectorAll<HTMLDetailsElement>('.nav-more, .header-contact'),
+					];
+					closeableMenus.forEach((menu) => {
+						const closeMenu = () => menu.removeAttribute('open');
 						document.addEventListener('click', (event) => {
-							if (navMore.open && !navMore.contains(event.target as Node)) closeNavMore();
+							if (menu.open && !menu.contains(event.target as Node)) closeMenu();
 						});
 						document.addEventListener('keydown', (event) => {
-							if (event.key === 'Escape' && navMore.open) closeNavMore();
+							if (event.key === 'Escape' && menu.open) closeMenu();
 						});
-						navMore.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeNavMore));
-					}
+						menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
+						menu.addEventListener('toggle', () => {
+							if (!menu.open) return;
+							closeableMenus.forEach((other) => {
+								if (other !== menu) other.removeAttribute('open');
+							});
+						});
+					});
 				</script>
 			</body>
 		</html>
@@ -205,6 +229,19 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				transition: background 160ms ease, color 160ms ease;
 			}
 			.header-cta:hover, .button-primary:hover { background: transparent; color: var(--signal); }
+			/* Contact menu: the header CTA opens a two-option panel (WhatsApp chat or a
+			   direct call). <details> keeps it working without JavaScript. */
+			.header-contact { position: relative; }
+			.header-contact summary { list-style: none; cursor: pointer; }
+			.header-contact summary::-webkit-details-marker { display: none; }
+			.header-contact summary:focus-visible { outline: 1px solid var(--signal); outline-offset: 3px; }
+			.header-contact-list { position: absolute; top: calc(100% + 0.55rem); right: 0; z-index: 20; display: grid; min-width: 235px; padding: 0.35rem; border: 1px solid var(--line); background: rgba(8, 12, 15, 0.98); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55); }
+			.header-contact-list a { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.8rem; color: #d7e2e4; text-decoration: none; }
+			.header-contact-list a + a { border-top: 1px solid var(--line); }
+			.header-contact-list a:hover, .header-contact-list a:focus-visible { background: var(--line); color: var(--paper); }
+			.header-contact-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+			.header-contact-hint { color: var(--muted); font-size: 0.62rem; white-space: nowrap; }
+			.header-contact-list a:hover .header-contact-hint { color: var(--signal); }
 			.button-secondary { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--paper); font-size: 0.76rem; font-weight: 700; text-decoration-color: var(--signal); text-underline-offset: 5px; }
 			.eyebrow { display: flex; align-items: center; gap: 0.65rem; color: var(--signal); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
 			.eyebrow::before { width: 25px; height: 1px; background: currentColor; content: ''; }
