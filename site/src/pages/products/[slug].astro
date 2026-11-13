@@ -59,12 +59,11 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 		</section>
 
 		<aside class="product-summary">
-			<p class="eyebrow">{bike.year} / {bike.category} / verified pre-owned</p>
+			<p class="eyebrow">{bike.year} / verified pre-owned</p>
 			<h1 class="display-heading">{bike.name}</h1>
-			<p class="condition">{bike.condition}</p>
 			<p class="product-description">{bike.description}</p>
 			<div class="price-score">
-				<div data-price-line data-rent-label="Rental price" data-rent-price="Subject to change"><span data-price-label>Asking price</span><strong data-price-value>{bike.priceLabel}</strong></div>
+				<div data-price-line><span>Asking price</span><strong>{bike.priceLabel}</strong></div>
 				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
 			</div>
 			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
@@ -88,46 +87,29 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			const href = button?.getAttribute('data-rent-href');
 			if (button && href) button.setAttribute('href', href);
 
-			// Rental rates vary with duration, so the asking price is replaced by
-			// a note instead of a figure.
+			// Rentals are quoted per booking, so the price line is hidden entirely.
 			const line = document.querySelector('[data-price-line]');
-			const label = line?.querySelector('[data-price-label]');
-			const value = line?.querySelector('[data-price-value]');
-			if (!line || !value) return;
-			if (label) label.textContent = line.getAttribute('data-rent-label');
-			const note = document.createElement('abbr');
-			note.className = 'price-variable';
-			note.title = 'Rental prices vary by duration and are subject to change.';
-			note.textContent = line.getAttribute('data-rent-price') ?? 'Subject to change';
-			value.replaceWith(note);
+			if (line) line.hidden = true;
 		})();
 	</script>
 
-	<section class="spec-section" aria-labelledby={specs.length > 0 ? 'spec-title' : 'spec-details-title'}>
-		<p class="eyebrow spec-details-title" id="spec-details-title">Bike details</p>
-		<dl class="spec-grid">
-			<div><dt>Size</dt><dd>{bike.size}</dd></div>
-			<div><dt>Condition</dt><dd>{bike.condition}</dd></div>
-			<div><dt>Weight</dt><dd>{bike.weight || '—'}</dd></div>
-		</dl>
-		{specs.length > 0 && (
-			<>
-				<div class="section-heading spec-list-heading"><div><h2 id="spec-title">The <span>spec.</span></h2></div></div>
-				<ul class="spec-list" aria-label="Additional specifications">
-					{specs.map((spec) => (
-						<li><span class="spec-label">{spec.label}:</span><span class="spec-value">{spec.value}</span></li>
-					))}
-				</ul>
-			</>
-		)}
-	</section>
+	{specs.length > 0 && (
+		<section class="spec-section" aria-labelledby="spec-title">
+			<div class="section-heading"><div><h2 id="spec-title">The <span>spec.</span></h2></div></div>
+			<ul class="spec-list" aria-label="Specifications">
+				{specs.map((spec) => (
+					<li><span class="spec-label">{spec.label}:</span><span class="spec-value">{spec.value}</span></li>
+				))}
+			</ul>
+		</section>
+	)}
 
 	<section class="inspection-section" id="inspection" aria-labelledby="inspection-title">
 		<div class="section-heading">
 			<div><p class="eyebrow">Verified by vo2bikes</p><h2 id="inspection-title">Inspection <span>report.</span></h2></div>
 			<p>Each area is checked individually. The totals below make up this bike’s score.</p>
 		</div>
-		<div class="report-score"><strong>{bike.score}</strong><span>/ 100</span><i class="score-track"><i style={`width: ${bike.score}%`}></i></i></div>
+		<div class="report-score"><strong>{bike.score}</strong><span>/ 100</span><div class="score-track"><span style={`width: ${bike.score}%`}></span></div></div>
 		<ul class="check-list">
 			{bike.checks.map((check) => (
 				<li><span class="check-name"><span aria-hidden="true">✓</span>{check.name}</span><span class="check-points">{check.score}<small> / {check.max}</small></span></li>
@@ -226,9 +208,9 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.thumb.is-active, .thumb:focus-visible { outline: none; border-color: var(--signal); }
 	.thumb:not(.is-active) { opacity: 0.78; }
 	.thumb:not(.is-active):hover { opacity: 1; }
-	.thumb img { display: block; width: 100%; height: 100%; object-fit: contain; }
+	.thumb img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white; }
 	.gallery-canvas { position: relative; margin: 0; overflow: hidden; background: #151d20; aspect-ratio: 4 / 3; cursor: crosshair; }
-	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; }
+	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white}
 	.gallery-canvas.is-magnifying { cursor: none; }
 	.magnifier { position: absolute; left: 0; top: 0; width: clamp(120px, 24vw, 190px); aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(241, 247, 248, 0.95); box-shadow: 0 0 0 1px rgba(9, 13, 16, 0.7), 0 6px 24px rgba(0, 0, 0, 0.55); background-repeat: no-repeat; pointer-events: none; opacity: 0; transform: translate(-50%, -50%); transition: opacity 120ms ease; z-index: 2; }
 	.magnifier.is-on { opacity: 1; }
@@ -237,14 +219,13 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.product-summary { position: sticky; top: 1rem; padding: 1.2rem 0; }
 	.product-summary .eyebrow { flex-wrap: wrap; font-size: 0.59rem; }
 	.product-summary .display-heading { margin: 1.2rem 0 0.4rem; font-size: clamp(2.4rem, 5vw, 5.3rem); }
-	.condition { margin: 0.5rem 0 1.2rem; color: var(--signal); font-size: 0.7rem; font-weight: 600; }
 	.product-description { color: #cfdddf; font-size: 0.82rem; line-height: 1.8; }
 	.price-score { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
 	.price-score div { display: grid; gap: 0.35rem; }
 	.price-score span { color: var(--muted); font-size: 0.62rem; }
 	.price-score strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
-	.price-score .price-variable { color: var(--muted); font-size: 0.95rem; font-weight: 700; cursor: help; }
-	.price-score .score-summary { text-align: right; }
+	.price-score [data-price-line][hidden] { display: none; }
+	.price-score .score-summary { margin-left: auto; text-align: right; }
 	.score-summary strong { color: var(--signal); }
 	.score-summary small { margin-left: 0.15rem; color: var(--muted); font: 500 0.7rem 'DM Sans', sans-serif; }
 	.score-track { display: block; height: 4px; margin: 0.4rem 0 1.4rem; background: rgba(226, 242, 244, 0.14); }
@@ -253,25 +234,18 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.enquiry-button.is-disabled, .enquiry-button.is-disabled:hover { border-color: var(--line); background: transparent; color: var(--muted); cursor: not-allowed; }
 	.inspection-link { display: block; margin-top: 1rem; color: var(--paper); font-size: 0.7rem; text-align: center; text-decoration-color: var(--signal); text-underline-offset: 4px; }
 	.inspection-link span { margin-left: 0.35rem; color: var(--signal); }
-	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); }
+	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); border-top: 1px solid var(--line) }
 	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 1.7rem; }
 	.section-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
 	.section-heading h2 span { color: var(--signal); }
 	.section-heading > p { max-width: 360px; margin: 0; color: var(--muted); font-size: 0.75rem; line-height: 1.7; }
-	.spec-details-title { max-width: 1200px; margin: 0 auto 1.1rem; }
-	.spec-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 1200px; margin: 0 auto; border-top: 1px solid var(--line); }
-	.spec-grid div { padding: 1.2rem 1rem 1.2rem 0; border-bottom: 1px solid var(--line); }
-	.spec-grid dt { color: var(--muted); font-size: 0.63rem; }
-	.spec-grid dd { margin: 0.45rem 0 0; color: var(--paper); font-size: 0.82rem; }
-	/* Flexible key/value specs (anything beyond size, condition and weight),
-	   so bikes can list only the components that apply to them. */
+	/* Every bike detail (size, weight, components, extras) comes from Sanity's
+	   spec list, so the section is a single bullet list. */
 	.spec-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 3rem; max-width: 1200px; margin: 0 auto; padding: 0; list-style: none; }
 	.spec-list li { display: flex; align-items: flex-start; column-gap: 0.5rem; padding: 0.8rem 0; border-top: 1px solid var(--line); font-size: 0.8rem; line-height: 1.6; }
 	.spec-list li::before { flex: none; width: 5px; height: 5px; margin-top: 0.55em; background: var(--signal); content: ''; }
 	.spec-label { color: var(--muted); }
 	.spec-value { color: var(--paper); }
-	/* "The spec." sits between the size/condition/weight grid and the list. */
-	.spec-list-heading { margin: 2.6rem auto 1rem; }
 	.inspection-section { background: rgba(12, 17, 20, 0.98); }
 	.report-score { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 0.4rem; max-width: 1200px; margin: 0 auto; padding: 1rem 0; border-top: 1px solid var(--line); }
 	.report-score > strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 3.4rem; line-height: 1; }
@@ -293,7 +267,6 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 		.gallery-thumbs { flex-direction: row; align-items: flex-start; height: auto; overflow-x: auto; overflow-y: hidden; }
 		.thumb { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
 		.product-layout { padding-right: 1rem; padding-left: 1rem; }
-		.spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 		.spec-list { grid-template-columns: 1fr; }
 		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
 	}

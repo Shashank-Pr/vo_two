@@ -8,7 +8,7 @@
 export const whatsappNumber = '919370343713'; // TODO: real WhatsApp number
 
 /** Instagram page URL. */
-export const instagramUrl = 'https://www.instagram.com/your-handle/'; // TODO: real Instagram page
+export const instagramUrl = 'https://www.instagram.com/vo2bikes/'; // TODO: real Instagram page
 
 /** Public contact email. */
 export const contactEmail = 'vo2bikes.official@gmail.com';

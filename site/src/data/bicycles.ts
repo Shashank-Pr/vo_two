@@ -33,8 +33,6 @@ interface SanityBicycleRecord {
 	slug: string;
 	name: string;
 	year: number;
-	category: string;
-	condition: string;
 	price: number;
 	image: SanityImageSource;
 	alt: string;
@@ -42,10 +40,7 @@ interface SanityBicycleRecord {
 	/** May be absent on older documents; treated as rentable when missing. */
 	isRentable?: boolean;
 	gallery: SanityImageSource[];
-	size: string;
-	/** Optional on documents created before the weight field existed. */
-	weight?: string;
-	/** Additional key/value specs; optional so older documents keep rendering. */
+	/** Every listed spec (size, weight, components…); absent on older documents. */
 	specList?: SpecItemRecord[];
 	description: string;
 	inspectionScores: InspectionScoreRecord[];
@@ -74,16 +69,12 @@ const BICYCLES_QUERY = defineQuery(`
 		"slug": slug,
 		name,
 		year,
-		category,
-		condition,
 		price,
 		image { asset, hotspot, crop },
 		alt,
 		available,
 		isRentable,
 		gallery[]{ asset, hotspot, crop },
-		size,
-		weight,
 		specList[]{ label, value },
 		description,
 		inspectionScores[]{
