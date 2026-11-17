@@ -1,0 +1,316 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getBicycles, urlFor } from '../../data/bicycles';
+import { whatsappHref } from '../../data/contact';
+import { base } from 'astro:config/client';
+import backdrop from '../../assets/backdrop.avif';
+
+const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`;
+
+export async function getStaticPaths() {
+	const bicycles = await getBicycles();
+	return bicycles.map((bike) => ({
+		params: { slug: bike.slug },
+		props: { bike },
+	}));
+}
+
+const { bike } = Astro.props;
+const gallery = [bike.image, ...bike.gallery];
+const specs = bike.specList ?? [];
+const purchaseMessage = `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}) listed at ${bike.priceLabel}. Is it still available?`;
+// The rental fleet links here with ?mode=rent. This page is prerendered as a
+// single URL, so the rental message is swapped in at runtime by the inline
+// script below the product layout.
+const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.year}). Could you share the rental details and availability?`;
+---
+
+<Layout title={`${bike.name} | VO2 Bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by VO2 Bikes.`}>
+	<nav class="breadcrumbs" aria-label="Breadcrumb">
+		<a href={`${base}`}>Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
+	</nav>
+	<style is:inline set:html={inlineStyles}></style>
+	<section class="product-layout">
+		<section class="product-gallery" aria-label={`${bike.name} photos`}>
+			<figure class="gallery-canvas">
+				<img
+					src={urlFor(gallery[0]).width(1200).url()}
+					alt={`${bike.name}, primary product view`}
+					fetchpriority="high"
+				/>
+				<div class="magnifier" aria-hidden="true"></div>
+				<figcaption class="gallery-count">01 / {String(gallery.length).padStart(2, '0')}</figcaption>
+			</figure>
+			<div class="gallery-thumbs" aria-label={`${bike.name} photo thumbnails`}>
+				{gallery.map((image, index) => (
+					<button
+						type="button"
+						class:list={['thumb', { 'is-active': index === 0 }]}
+						aria-label={`Show ${bike.name} photo ${index + 1}`}
+						aria-current={index === 0 ? 'true' : undefined}
+						data-index={index}
+						data-src={urlFor(image).width(1200).url()}
+						data-zoom={urlFor(image).width(2400).url()}
+					>
+						<img src={urlFor(image).width(180).url()} alt="" loading="lazy" />
+					</button>
+				))}
+			</div>
+		</section>
+
+		<aside class="product-summary">
+			<p class="eyebrow">{bike.year} / verified pre-owned</p>
+			<h1 class="display-heading">{bike.name}</h1>
+			<p class="product-description">{bike.description}</p>
+			<div class="price-score">
+				<div data-price-line><span>Asking price</span><strong>{bike.priceLabel}</strong></div>
+				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
+			</div>
+			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
+			{bike.available ? (
+				<a class="button-primary enquiry-button" href={whatsappHref(purchaseMessage)} data-rent-href={whatsappHref(rentalMessage)} target="_blank" rel="noopener noreferrer">Enquire about this bike <span aria-hidden="true">↗</span></a>
+			) : (
+				<span class="button-primary enquiry-button is-disabled" aria-disabled="true">Sold out</span>
+			)}
+			<a class="inspection-link" href="#inspection">Read the full inspection <span aria-hidden="true">↓</span></a>
+		</aside>
+	</section>
+
+	<script is:inline>
+		// Rentals reuse this prerendered page via ?mode=rent, so the URL query is
+		// the only place the rental context exists. Runs inline (synchronously)
+		// so the link and price never show the purchase version in rental mode.
+		(() => {
+			if (new URLSearchParams(location.search).get('mode') !== 'rent') return;
+
+			const button = document.querySelector('[data-rent-href]');
+			const href = button?.getAttribute('data-rent-href');
+			if (button && href) button.setAttribute('href', href);
+
+			// Rentals are quoted per booking, so the price line is hidden entirely.
+			const line = document.querySelector('[data-price-line]');
+			if (line) line.hidden = true;
+		})();
+	</script>
+
+	{specs.length > 0 && (
+		<section class="spec-section" aria-labelledby="spec-title">
+			<div class="section-heading"><div><h2 id="spec-title">The <span>spec.</span></h2></div></div>
+			<ul class="spec-list" aria-label="Specifications">
+				{specs.map((spec) => (
+					<li><span class="spec-label">{spec.label}:</span><span class="spec-value">{spec.value}</span></li>
+				))}
+			</ul>
+		</section>
+	)}
+
+	<section class="inspection-section" id="inspection" aria-labelledby="inspection-title">
+		<div class="section-heading">
+			<div><p class="eyebrow">Verified by vo2bikes</p><h2 id="inspection-title">Inspection <span>report.</span></h2></div>
+			<p>Each area is checked individually. The totals below make up this bike’s score.</p>
+		</div>
+		<div class="report-score"><strong>{bike.score}</strong><span>/ 100</span><div class="score-track"><span style={`width: ${bike.score}%`}></span></div></div>
+		<ul class="check-list">
+			{bike.checks.map((check) => (
+				<li><span class="check-name"><span aria-hidden="true">✓</span>{check.name}</span><span class="check-points">{check.score}<small> / {check.max}</small></span></li>
+			))}
+		</ul>
+		<p class="report-note">The score reflects this bike’s recorded condition at inspection. Bike-specific measurements and notes are available with the sale.</p>
+	</section>
+
+	<script>
+		const gallery = document.querySelector('.product-gallery');
+		if (gallery) {
+			const canvas = gallery.querySelector('.gallery-canvas');
+			const lens = gallery.querySelector('.magnifier');
+			const mainImage = canvas && canvas.querySelector('img');
+			const countEl = gallery.querySelector('.gallery-count');
+			const thumbs = [...gallery.querySelectorAll('.thumb')];
+			const ZOOM = 2;
+
+			const pad = (n) => String(n).padStart(2, '0');
+
+			/* Keep the active thumbnail visible in the strip below the canvas. */
+			const reveal = (thumb) => {
+				const strip = thumb.parentElement;
+				if (!strip) return;
+				const stripRect = strip.getBoundingClientRect();
+				const thumbRect = thumb.getBoundingClientRect();
+				if (thumbRect.left < stripRect.left || thumbRect.right > stripRect.right) {
+					strip.scrollBy({
+						left: thumbRect.left - stripRect.left - (stripRect.width - thumbRect.width) / 2,
+						behavior: 'smooth',
+					});
+				}
+			};
+
+			const activate = (thumb) => {
+				thumbs.forEach((t) => {
+					const active = t === thumb;
+					t.classList.toggle('is-active', active);
+					if (active) t.setAttribute('aria-current', 'true');
+					else t.removeAttribute('aria-current');
+				});
+				mainImage.src = thumb.dataset.src;
+				lens.style.backgroundImage = `url('${thumb.dataset.zoom}')`;
+				countEl.textContent = `${pad(Number(thumb.dataset.index) + 1)} / ${pad(thumbs.length)}`;
+				reveal(thumb);
+			};
+
+			const lensHalf = Math.round(lens.offsetWidth / 2);
+
+			/* The canvas is a fixed 4:3 block and the photo is contained inside it,
+			   so the visible image is letterboxed on two sides. Mirror that
+			   geometry here: the lens must track the photo, not the empty box. */
+			const setLens = (clientX, clientY) => {
+				const rect = canvas.getBoundingClientRect();
+				const naturalWidth = mainImage.naturalWidth || rect.width;
+				const naturalHeight = mainImage.naturalHeight || rect.height;
+				const scale = Math.min(rect.width / naturalWidth, rect.height / naturalHeight);
+				const shownWidth = naturalWidth * scale;
+				const shownHeight = naturalHeight * scale;
+				const offsetX = (rect.width - shownWidth) / 2;
+				const offsetY = (rect.height - shownHeight) / 2;
+
+				const x = Math.min(Math.max(clientX - rect.left - offsetX, 0), shownWidth);
+				const y = Math.min(Math.max(clientY - rect.top - offsetY, 0), shownHeight);
+
+				lens.style.left = `${x + offsetX}px`;
+				lens.style.top = `${y + offsetY}px`;
+				lens.style.backgroundSize = `${shownWidth * ZOOM}px ${shownHeight * ZOOM}px`;
+				lens.style.backgroundPosition = `${-(x * ZOOM) + lensHalf}px ${-(y * ZOOM) + lensHalf}px`;
+			};
+
+			const onMove = (event) => {
+				if (!lens.classList.contains('is-on')) return;
+				setLens(event.clientX, event.clientY);
+			};
+
+			thumbs.forEach((thumb) => {
+				thumb.addEventListener('mouseenter', () => activate(thumb));
+				thumb.addEventListener('click', () => activate(thumb));
+			});
+
+			/* Touch: a horizontal swipe on the main photo steps to the next or
+			   previous image. Vertical drags are ignored so the page still scrolls. */
+			let swipeStart = null;
+			canvas.addEventListener(
+				'touchstart',
+				(event) => {
+					swipeStart =
+						event.touches.length === 1
+							? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+							: null;
+				},
+				{ passive: true },
+			);
+			canvas.addEventListener('touchcancel', () => {
+				swipeStart = null;
+			}, { passive: true });
+			canvas.addEventListener(
+				'touchend',
+				(event) => {
+					if (!swipeStart) return;
+					const touch = event.changedTouches[0];
+					const dx = touch.clientX - swipeStart.x;
+					const dy = touch.clientY - swipeStart.y;
+					swipeStart = null;
+					if (Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy)) return;
+
+					const current = thumbs.findIndex((thumb) => thumb.classList.contains('is-active'));
+					const next = thumbs[dx < 0 ? current + 1 : current - 1];
+					if (next) activate(next);
+				},
+				{ passive: true },
+			);
+
+			canvas.addEventListener('mouseenter', (event) => {
+				lens.classList.add('is-on');
+				canvas.classList.add('is-magnifying');
+				onMove(event);
+			});
+			canvas.addEventListener('mousemove', onMove);
+			canvas.addEventListener('mouseleave', () => {
+				lens.classList.remove('is-on');
+				canvas.classList.remove('is-magnifying');
+			});
+
+			activate(thumbs[0]);
+		}
+	</script>
+</Layout>
+
+<style>
+	.breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 1.2rem clamp(1.25rem, 5vw, 5.5rem); color: var(--muted); font-size: 0.66rem; }
+	.breadcrumbs a { color: var(--paper); text-decoration-color: var(--signal); text-underline-offset: 3px; }
+	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 4rem; }
+	.product-gallery { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; align-items: start; min-width: 0; }
+	/* Thumbnail strip below the main canvas: one scrollable row, so any number of
+	   photos fits without changing the canvas height. Every thumb is the same 4:3
+	   block and the photo is contained inside it (letterboxed, never cropped), so
+	   mixed portrait/landscape sets still line up. */
+	.gallery-thumbs { display: flex; gap: 0.6rem; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: none; }
+	.gallery-thumbs::-webkit-scrollbar { display: none; }
+	.thumb { display: block; flex: 0 0 auto; width: 92px; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
+	.thumb:hover { border-color: var(--muted); }
+	.thumb.is-active, .thumb:focus-visible { outline: none; border-color: var(--signal); }
+	.thumb:not(.is-active) { opacity: 0.78; }
+	.thumb:not(.is-active):hover { opacity: 1; }
+	.thumb img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white; }
+	.gallery-canvas { position: relative; margin: 0; overflow: hidden; background: #151d20; aspect-ratio: 4 / 3; cursor: crosshair; }
+	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white}
+	.gallery-canvas.is-magnifying { cursor: none; }
+	.magnifier { position: absolute; left: 0; top: 0; width: clamp(120px, 24vw, 190px); aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(241, 247, 248, 0.95); box-shadow: 0 0 0 1px rgba(9, 13, 16, 0.7), 0 6px 24px rgba(0, 0, 0, 0.55); background-repeat: no-repeat; pointer-events: none; opacity: 0; transform: translate(-50%, -50%); transition: opacity 120ms ease; z-index: 2; }
+	.magnifier.is-on { opacity: 1; }
+	.product-gallery figcaption { position: absolute; right: 0.7rem; bottom: 0.7rem; padding: 0.4rem 0.5rem; background: rgba(7, 13, 15, 0.8); color: var(--paper); font-size: 0.6rem; z-index: 3; }
+	.product-gallery figcaption span { color: var(--signal); }
+	.product-summary { position: sticky; top: 1rem; padding: 1.2rem 0; }
+	.product-summary .eyebrow { flex-wrap: wrap; font-size: 0.59rem; }
+	.product-summary .display-heading { margin: 1.2rem 0 0.4rem; font-size: clamp(2.4rem, 5vw, 5.3rem); }
+	.product-description { color: #cfdddf; font-size: 0.82rem; line-height: 1.8; }
+	.price-score { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+	.price-score div { display: grid; gap: 0.35rem; }
+	.price-score span { color: var(--muted); font-size: 0.62rem; }
+	.price-score strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
+	.price-score [data-price-line][hidden] { display: none; }
+	.price-score .score-summary { margin-left: auto; text-align: right; }
+	.score-summary strong { color: var(--signal); }
+	.score-summary small { margin-left: 0.15rem; color: var(--muted); font: 500 0.7rem 'DM Sans', sans-serif; }
+	.score-track { display: block; height: 4px; margin: 0.4rem 0 1.4rem; background: rgba(226, 242, 244, 0.14); }
+	.score-track > span { display: block; height: 100%; background: var(--signal); }
+	.enquiry-button { width: 100%; }
+	.enquiry-button.is-disabled, .enquiry-button.is-disabled:hover { border-color: var(--line); background: transparent; color: var(--muted); cursor: not-allowed; }
+	.inspection-link { display: block; margin-top: 1rem; color: var(--paper); font-size: 0.7rem; text-align: center; text-decoration-color: var(--signal); text-underline-offset: 4px; }
+	.inspection-link span { margin-left: 0.35rem; color: var(--signal); }
+	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); border-top: 1px solid var(--line) }
+	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 1.7rem; }
+	.section-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.section-heading h2 span { color: var(--signal); }
+	.section-heading > p { max-width: 360px; margin: 0; color: var(--muted); font-size: 0.75rem; line-height: 1.7; }
+	/* Every bike detail (size, weight, components, extras) comes from Sanity's
+	   spec list, so the section is a single bullet list. */
+	.spec-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 3rem; max-width: 1200px; margin: 0 auto; padding: 0; list-style: none; }
+	.spec-list li { display: flex; align-items: flex-start; column-gap: 0.5rem; padding: 0.8rem 0; border-top: 1px solid var(--line); font-size: 0.8rem; line-height: 1.6; }
+	.spec-list li::before { flex: none; width: 5px; height: 5px; margin-top: 0.55em; background: var(--signal); content: ''; }
+	.spec-label { color: var(--muted); }
+	.spec-value { color: var(--paper); }
+	.inspection-section { background: rgba(12, 17, 20, 0.98); }
+	.report-score { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 0.4rem; max-width: 1200px; margin: 0 auto; padding: 1rem 0; border-top: 1px solid var(--line); }
+	.report-score > strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 3.4rem; line-height: 1; }
+	.report-score > span { color: var(--muted); font-size: 0.7rem; }
+	.report-score .score-track { align-self: center; margin: 0 0 0 1rem; }
+	.check-list { max-width: 1200px; margin: 0 auto; padding: 0; list-style: none; }
+	.check-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-top: 1px solid var(--line); }
+	.check-name { display: flex; align-items: center; gap: 0.65rem; color: var(--paper); font-size: 0.8rem; }
+	.check-name > span { color: var(--signal); }
+	.check-points { color: var(--paper); font-weight: 700; }
+	.check-points small { color: var(--muted); font-size: 0.65rem; }
+	.report-note { max-width: 1200px; margin: 1.4rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
+	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; } .product-summary { position: static; } }
+	@media (max-width: 600px) {
+		.thumb { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
+		.product-layout { padding-right: 1rem; padding-left: 1rem; }
+		.spec-list { grid-template-columns: 1fr; }
+		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
+	}
+</style>
