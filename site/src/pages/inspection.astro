@@ -1,8 +1,18 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { base } from 'astro:config/client';
+import inspectionHero from '../assets/inspection_hero.webp';
 
 type InspectionCheck = { name: string; detail: string };
+
+/**
+ * Hotspots for the hero banner.
+ * Start with none — add them visually at /inspection/?edit-hotspots, then
+ * paste the generated config here to save them.
+ *
+ * x / y are percentages of the hero band (0-100).
+ */
+const hotspots: Array<{ id: string; x: string; y: string; label: string; title: string; text: string }> = [];
 
 const inspection: Array<{ area: string; points: number; checks: InspectionCheck[] }> = [
 	{
@@ -111,13 +121,43 @@ const inspection: Array<{ area: string; points: number; checks: InspectionCheck[
 ---
 
 <Layout title="What Sets Us Apart | vo2bikes" description="See the checks behind every vo2bikes pre-owned bicycle inspection score.">
-	<section class="page-intro hero-band">
+	<section class="page-intro hero-band" style={`--hero-bg: #090d10 url(${inspectionHero.src}) center / cover no-repeat`}>
 		<div class="intro-inner">
 			<p class="eyebrow">Our promise / one standard for every bike</p>
 			<h1 class="display-heading">Verified  <span>bikes. </span><br> Confident <span> ride.</span></h1>
 			<p class="lead">Every pre-owned bike is inspected before it reaches the showroom. We score six areas out of 100 and show the breakdown with the listing.</p>
 		</div>
+		<div class="hero-hotspots" aria-label="Inspection highlights">
+			{hotspots.map((hs) => (
+				<div class="hotspot" style={`--x: ${hs.x}; --y: ${hs.y};`} data-id={hs.id}>
+					<button class="hotspot-dot" type="button" aria-expanded="false" aria-controls={hs.id}>
+						<span class="sr-only">{hs.label}</span>
+					</button>
+					<div class="hotspot-tip" id={hs.id} role="tooltip">
+						<strong>{hs.title}</strong>
+						<p>{hs.text}</p>
+					</div>
+				</div>
+			))}
+		</div>
+		<div class="hotspot-toolbar" hidden>
+			<button type="button" class="editor-add">+ Add hotspot</button>
+			<button type="button" class="editor-copy">Copy config</button>
+			<span class="editor-status" aria-live="polite"></span>
+		</div>
 	</section>
+
+	<aside class="hotspot-editor" hidden>
+		<div class="editor-head">
+			<p><strong>Hotspot editor</strong> — click <em>+ Add hotspot</em> then click the banner to place a circle. Drag any circle to move it. Write the text shown on hover/tap below. Copy the config into <code>hotspots</code> in <code>inspection.astro</code> to save.</p>
+			<p class="editor-status" aria-live="polite"></p>
+		</div>
+		<div class="editor-list"></div>
+		<details class="editor-raw" open>
+			<summary>Config output</summary>
+			<pre class="editor-output"></pre>
+		</details>
+	</aside>
 
 	<section class="inspection-section" id="checklist" aria-labelledby="checklist-title">
 		<div class="inspection-heading">
@@ -146,9 +186,420 @@ const inspection: Array<{ area: string; points: number; checks: InspectionCheck[
 	</section>
 </Layout>
 
+<script>
+	document.addEventListener('astro:page-load', () => {
+		const hero = document.querySelector('.page-intro.hero-band');
+		const layer = hero?.querySelector('.hero-hotspots');
+		if (!hero || !(layer instanceof HTMLElement)) return;
+
+		const getHotspots = () => Array.from(layer.querySelectorAll('.hotspot'));
+
+		const closeAll = (except) => {
+			getHotspots().forEach((hs) => {
+				if (hs === except) return;
+				hs.classList.remove('is-open');
+				const btn = hs.querySelector('.hotspot-dot');
+				if (btn) btn.setAttribute('aria-expanded', 'false');
+			});
+		};
+
+		const bindHotspot = (hs) => {
+			const btn = hs.querySelector('.hotspot-dot');
+			if (!(btn instanceof HTMLElement) || btn.dataset.bound === '1') return;
+			btn.dataset.bound = '1';
+			let dragged = false;
+			btn.addEventListener('click', (e) => {
+				if (dragged) { dragged = false; return; }
+				e.preventDefault();
+				e.stopPropagation();
+				const open = hs.classList.toggle('is-open');
+				btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+				if (open) closeAll(hs);
+			});
+			// Expose for drag logic
+			hs._setDragged = () => { dragged = true; };
+		};
+
+		getHotspots().forEach(bindHotspot);
+
+		document.addEventListener('click', (e) => {
+			if (!(e.target instanceof Element) || !e.target.closest('.hotspot')) closeAll();
+		});
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') closeAll();
+		});
+
+		// Placement/edit mode: open /inspection/?edit-hotspots
+		const params = new URLSearchParams(location.search);
+		if (!params.has('edit-hotspots')) return;
+
+		const editor = document.querySelector('.hotspot-editor');
+		const toolbar = hero.querySelector('.hotspot-toolbar');
+		const output = editor?.querySelector('.editor-output');
+		const copyBtn = toolbar?.querySelector('.editor-copy');
+		const addBtn = toolbar?.querySelector('.editor-add');
+		const listEl = editor?.querySelector('.editor-list');
+		const statusEl = toolbar?.querySelector('.editor-status');
+		const editorStatusEl = editor?.querySelector('.editor-status');
+		if (!(editor instanceof HTMLElement) || !(output instanceof HTMLElement) || !(listEl instanceof HTMLElement) || !(toolbar instanceof HTMLElement)) return;
+
+		editor.hidden = false;
+		toolbar.hidden = false;
+		hero.classList.add('is-editing-hotspots');
+
+		const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+		const pct = (n) => `${Math.max(0, Math.min(100, n)).toFixed(2)}%`;
+		const setStatus = (msg) => {
+			if (statusEl instanceof HTMLElement) statusEl.textContent = msg || '';
+			if (editorStatusEl instanceof HTMLElement) editorStatusEl.textContent = msg || '';
+		};
+
+		// Astro scopes CSS with data-astro-cid-* attributes. Elements created by
+		// this editor need the same attributes or none of the styles apply.
+		const scopeAttrs = Array.from(layer.attributes)
+			.filter((a) => a.name.startsWith('data-astro-cid-'))
+			.map((a) => [a.name, a.value] as const);
+		const applyScope = (el: Element) => {
+			scopeAttrs.forEach(([name, value]) => el.setAttribute(name, value));
+			Array.from(el.children).forEach(applyScope);
+		};
+
+		const readHotspot = (hs) => ({
+			id: hs.getAttribute('data-id') || `hs-${Date.now()}`,
+			x: hs.style.getPropertyValue('--x').trim() || '50%',
+			y: hs.style.getPropertyValue('--y').trim() || '50%',
+			label: hs.querySelector('.sr-only')?.textContent?.trim() || '',
+			title: hs.querySelector('.hotspot-tip strong')?.textContent?.trim() || '',
+			text: hs.querySelector('.hotspot-tip p')?.textContent?.trim() || '',
+		});
+
+		let state = getHotspots().map(readHotspot);
+		let placing = false;
+		let selectedId = null;
+
+		const renderOutput = () => {
+			const items = state.map((h) => `\t{ id: '${esc(h.id)}', x: '${esc(h.x)}', y: '${esc(h.y)}', label: '${esc(h.label || h.title)}', title: '${esc(h.title)}', text: '${esc(h.text)}' },`);
+			output.textContent = `const hotspots = [\n${items.join('\n')}\n];`;
+		};
+
+		const syncHotspotDom = (item) => {
+			const hs = layer.querySelector(`.hotspot[data-id="${CSS.escape(item.id)}"]`);
+			if (!(hs instanceof HTMLElement)) return;
+			hs.style.setProperty('--x', item.x);
+			hs.style.setProperty('--y', item.y);
+			const sr = hs.querySelector('.sr-only');
+			const strong = hs.querySelector('.hotspot-tip strong');
+			const p = hs.querySelector('.hotspot-tip p');
+			if (sr) sr.textContent = item.label || item.title || 'Hotspot';
+			if (strong) strong.textContent = item.title || '';
+			if (p) p.textContent = item.text || '';
+		};
+
+		const renderList = () => {
+			listEl.innerHTML = '';
+			state.forEach((item) => {
+				const row = document.createElement('div');
+				row.className = 'editor-item' + (item.id === selectedId ? ' selected' : '');
+				row.dataset.id = item.id;
+				row.innerHTML = `
+					<div class="editor-item-grid">
+						<label class="field-full">Title<input type="text" data-field="title" value=""></label>
+						<label class="field-full">Info text<textarea data-field="text"></textarea></label>
+						<label>X<input type="text" data-field="x" value=""></label>
+						<label>Y<input type="text" data-field="y" value=""></label>
+						<div class="editor-item-actions"><button type="button" class="editor-delete">Delete</button></div>
+					</div>`;
+				row.querySelector('[data-field="title"]').value = item.title || '';
+				row.querySelector('[data-field="text"]').value = item.text || '';
+				row.querySelector('[data-field="x"]').value = item.x || '';
+				row.querySelector('[data-field="y"]').value = item.y || '';
+				row.addEventListener('click', (e) => {
+					if (e.target instanceof Element && e.target.closest('button,input,textarea')) return;
+					selectedId = item.id;
+					renderList();
+				});
+				row.querySelectorAll('input,textarea').forEach((el) => {
+					el.addEventListener('input', () => {
+						const field = el.getAttribute('data-field');
+						if (!field) return;
+						item[field] = el.value;
+						if (field === 'title' && !item.label) item.label = item.title;
+						syncHotspotDom(item);
+						renderOutput();
+					});
+				});
+				row.querySelector('.editor-delete')?.addEventListener('click', () => {
+					state = state.filter((h) => h.id !== item.id);
+					layer.querySelector(`.hotspot[data-id="${CSS.escape(item.id)}"]`)?.remove();
+					if (selectedId === item.id) selectedId = null;
+					renderList();
+					renderOutput();
+					setStatus('Hotspot removed. Copy config to save changes.');
+				});
+				listEl.appendChild(row);
+			});
+		};
+
+		const createHotspotDom = (item) => {
+			const hs = document.createElement('div');
+			hs.className = 'hotspot';
+			hs.style.setProperty('--x', item.x);
+			hs.style.setProperty('--y', item.y);
+			hs.setAttribute('data-id', item.id);
+			hs.innerHTML = `
+				<button class="hotspot-dot" type="button" aria-expanded="false" aria-controls="${item.id}">
+					<span class="sr-only"></span>
+				</button>
+				<div class="hotspot-tip" id="${item.id}" role="tooltip">
+					<strong></strong>
+					<p></p>
+				</div>`;
+			layer.appendChild(hs);
+			applyScope(hs);
+			bindHotspot(hs);
+			syncHotspotDom(item);
+			return hs;
+		};
+
+		const ensureDomMatchesState = () => {
+			// Existing DOM already matches initial state; future adds use createHotspotDom
+		};
+
+		renderList();
+		renderOutput();
+		ensureDomMatchesState();
+
+		if (copyBtn instanceof HTMLButtonElement) {
+			copyBtn.addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(output.textContent || '');
+					copyBtn.textContent = 'Copied';
+					setTimeout(() => { copyBtn.textContent = 'Copy config'; }, 1200);
+					setStatus('Config copied. Paste it into the hotspots array in inspection.astro to save.');
+				} catch {
+					copyBtn.textContent = 'Copy failed';
+					setTimeout(() => { copyBtn.textContent = 'Copy config'; }, 1200);
+				}
+			});
+		}
+
+		if (addBtn instanceof HTMLButtonElement) {
+			addBtn.addEventListener('click', () => {
+				placing = true;
+				hero.classList.add('placing-hotspot');
+				setStatus('Click on the banner image to place the new hotspot.');
+			});
+		}
+
+		hero.addEventListener('click', (e) => {
+			if (!(e.target instanceof Element)) return;
+			if (e.target.closest('.hotspot-editor')) return;
+			if (e.target.closest('.hotspot')) return;
+			if (!placing) return;
+			const rect = hero.getBoundingClientRect();
+			const x = pct(((e.clientX - rect.left) / rect.width) * 100);
+			const y = pct(((e.clientY - rect.top) / rect.height) * 100);
+			const item = { id: `hs-${Date.now()}`, x, y, label: 'New hotspot', title: 'New hotspot', text: 'Add info text here.' };
+			state.push(item);
+			selectedId = item.id;
+			createHotspotDom(item);
+			renderList();
+			renderOutput();
+			placing = false;
+			hero.classList.remove('placing-hotspot');
+			setStatus('Hotspot added. Edit its title/text, drag to fine-tune, then copy config to save.');
+			const titleInput = listEl.querySelector(`.editor-item[data-id="${CSS.escape(item.id)}"] [data-field="title"]`);
+			if (titleInput instanceof HTMLInputElement) { titleInput.focus(); titleInput.select(); }
+		});
+
+		// Drag to reposition (updates state + editor inputs)
+		let dragging = null;
+		let dragMoved = false;
+		layer.addEventListener('pointerdown', (e) => {
+			const dot = e.target instanceof Element ? e.target.closest('.hotspot-dot') : null;
+			const hs = dot ? dot.closest('.hotspot') : null;
+			if (!(dot instanceof HTMLElement) || !(hs instanceof HTMLElement)) return;
+			dragging = hs;
+			dragMoved = false;
+			dot.setPointerCapture(e.pointerId);
+			e.stopPropagation();
+		});
+		layer.addEventListener('pointermove', (e) => {
+			if (!(dragging instanceof HTMLElement)) return;
+			const rect = hero.getBoundingClientRect();
+			const x = pct(((e.clientX - rect.left) / rect.width) * 100);
+			const y = pct(((e.clientY - rect.top) / rect.height) * 100);
+			dragging.style.setProperty('--x', x);
+			dragging.style.setProperty('--y', y);
+			const id = dragging.getAttribute('data-id');
+			const item = state.find((h) => h.id === id);
+			if (item) {
+				item.x = x; item.y = y;
+				const row = listEl.querySelector(`.editor-item[data-id="${CSS.escape(id)}"]`);
+				if (row) {
+					const xi = row.querySelector('[data-field="x"]');
+					const yi = row.querySelector('[data-field="y"]');
+					if (xi instanceof HTMLInputElement) xi.value = x;
+					if (yi instanceof HTMLInputElement) yi.value = y;
+				}
+			}
+			dragMoved = true;
+		});
+		const endDrag = () => {
+			if (!dragging) return;
+			if (dragMoved && typeof dragging._setDragged === 'function') dragging._setDragged();
+			dragging = null;
+			if (dragMoved) { renderOutput(); setStatus('Position updated. Copy config to save changes.'); }
+			dragMoved = false;
+		};
+		layer.addEventListener('pointerup', endDrag);
+		layer.addEventListener('pointercancel', endDrag);
+	});
+	// Fallback for initial load when view transitions aren't active
+	if (document.readyState !== 'loading') {
+		document.dispatchEvent(new Event('astro:page-load'));
+	} else {
+		document.addEventListener('DOMContentLoaded', () => document.dispatchEvent(new Event('astro:page-load')));
+	}
+</script>
+
 <style>
-	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; background: var(--hero-bg); }
+	.page-intro { position: relative; max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; background: var(--hero-bg); overflow: hidden; }
 	.page-intro .lead { margin: 1.2rem 0 0; }
+	.intro-inner { position: relative; z-index: 2; }
+	.hero-hotspots { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+	.hotspot { position: absolute; left: var(--x); top: var(--y); pointer-events: auto; }
+	.hotspot-dot {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 24px;
+		height: 24px;
+		padding: 0;
+		border: 2px solid #ff4d6d;
+		border-radius: 50%;
+		background: rgba(255, 20, 60, 0.18);
+		box-shadow:
+			0 0 0 0 rgba(255, 30, 70, 0.75),
+			0 0 8px rgba(255, 40, 80, 0.95),
+			0 0 18px rgba(255, 30, 70, 0.8),
+			0 0 34px rgba(255, 20, 60, 0.55),
+			inset 0 0 8px rgba(255, 60, 90, 0.7);
+		cursor: pointer;
+		transform: translate(-50%, -50%);
+		animation: hotspot-pulse 1.8s ease-out infinite;
+	}
+	.hotspot-dot::after {
+		content: '';
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #fff;
+		box-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 0 12px rgba(255, 60, 90, 0.9);
+	}
+	.hotspot-dot:hover, .hotspot-dot:focus-visible, .hotspot.is-open .hotspot-dot {
+		box-shadow:
+			0 0 0 6px rgba(255, 30, 70, 0.18),
+			0 0 10px rgba(255, 50, 90, 1),
+			0 0 22px rgba(255, 30, 70, 0.95),
+			0 0 42px rgba(255, 20, 60, 0.7),
+			inset 0 0 10px rgba(255, 80, 110, 0.85);
+		outline: none;
+	}
+	@keyframes hotspot-pulse {
+		0% {
+			box-shadow:
+				0 0 0 0 rgba(255, 30, 70, 0.75),
+				0 0 8px rgba(255, 40, 80, 0.95),
+				0 0 18px rgba(255, 30, 70, 0.8),
+				0 0 34px rgba(255, 20, 60, 0.55),
+				inset 0 0 8px rgba(255, 60, 90, 0.7);
+		}
+		70% {
+			box-shadow:
+				0 0 0 14px rgba(255, 30, 70, 0),
+				0 0 12px rgba(255, 50, 90, 0.9),
+				0 0 26px rgba(255, 30, 70, 0.7),
+				0 0 44px rgba(255, 20, 60, 0.4),
+				inset 0 0 8px rgba(255, 60, 90, 0.7);
+		}
+		100% {
+			box-shadow:
+				0 0 0 0 rgba(255, 30, 70, 0),
+				0 0 8px rgba(255, 40, 80, 0.95),
+				0 0 18px rgba(255, 30, 70, 0.8),
+				0 0 34px rgba(255, 20, 60, 0.55),
+				inset 0 0 8px rgba(255, 60, 90, 0.7);
+		}
+	}
+	.hotspot-tip {
+		position: absolute;
+		left: 50%;
+		bottom: calc(100% + 14px);
+		z-index: 4;
+		width: max-content;
+		max-width: min(260px, 80vw);
+		padding: 0.7rem 0.85rem;
+		border: 1px solid rgba(255, 45, 45, 0.45);
+		border-radius: 10px;
+		background: rgba(10, 14, 17, 0.96);
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+		color: #e7f0f2;
+		opacity: 0;
+		visibility: hidden;
+		transform: translate(-50%, 6px);
+		transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+		pointer-events: none;
+	}
+	.hotspot-tip::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 100%;
+		width: 10px;
+		height: 10px;
+		background: rgba(10, 14, 17, 0.96);
+		border-right: 1px solid rgba(255, 45, 45, 0.45);
+		border-bottom: 1px solid rgba(255, 45, 45, 0.45);
+		transform: translateX(-50%) rotate(45deg);
+	}
+	.hotspot-tip strong { display: block; margin-bottom: 0.2rem; color: #fff; font-size: 0.82rem; }
+	.hotspot-tip p { margin: 0; color: #cfdddf; font-size: 0.74rem; line-height: 1.45; }
+	.hotspot:hover .hotspot-tip,
+	.hotspot:focus-within .hotspot-tip,
+	.hotspot.is-open .hotspot-tip {
+		opacity: 1;
+		visibility: visible;
+		transform: translate(-50%, 0);
+	}
+	.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+	.hotspot-toolbar { position: absolute; top: 0.75rem; right: clamp(1rem, 4vw, 3rem); z-index: 6; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 2rem); }
+	.hotspot-toolbar[hidden], .hotspot-editor[hidden] { display: none; }
+	.hotspot-toolbar button { padding: 0.42rem 0.7rem; border: 1px solid var(--line); border-radius: 6px; background: rgba(10,14,17,0.92); color: #fff; font-size: 0.72rem; cursor: pointer; }
+	.hotspot-toolbar .editor-add { border-color: rgba(255,77,109,0.7); background: rgba(255,30,70,0.28); }
+	.hotspot-toolbar .editor-status { max-width: 260px; margin: 0; font-size: 0.68rem; color: #8ff0a4; text-align: right; }
+	.hotspot-editor { position: relative; z-index: 1; width: min(1000px, calc(100% - 2rem)); margin: 0 auto; padding: 1rem clamp(1rem, 3vw, 1.5rem); border: 1px solid rgba(255, 77, 109, 0.5); border-top: 0; border-radius: 0 0 10px 10px; background: #0b1114; color: #e7f0f2; }
+	.hotspot-editor p { margin: 0 0 0.5rem; font-size: 0.75rem; line-height: 1.45; color: #cfdddf; }
+	.editor-head { margin-bottom: 0.75rem; }
+	.editor-item-actions button { padding: 0.38rem 0.65rem; border: 1px solid var(--line); border-radius: 6px; background: #182228; color: #fff; font-size: 0.72rem; cursor: pointer; }
+	.editor-status { min-height: 1em; margin: 0; font-size: 0.7rem; color: #8ff0a4; }
+	.editor-list { display: grid; gap: 0.55rem; margin-bottom: 0.5rem; }
+	.editor-item { padding: 0.55rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(255,255,255,0.02); }
+	.editor-item.selected { border-color: rgba(255,77,109,0.65); box-shadow: 0 0 0 1px rgba(255,77,109,0.25) inset; }
+	.editor-item-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.4rem; align-items: end; }
+	.editor-item label { display: grid; gap: 0.18rem; font-size: 0.68rem; color: #a9bcc0; }
+	.editor-item input, .editor-item textarea { width: 100%; padding: 0.35rem 0.45rem; border: 1px solid var(--line); border-radius: 5px; background: #0b1114; color: #e7f0f2; font: inherit; font-size: 0.72rem; }
+	.editor-item textarea { min-height: 2.6em; resize: vertical; }
+	.editor-item .field-full { grid-column: 1 / -1; }
+	.editor-item-actions { display: flex; gap: 0.35rem; }
+	.editor-item-actions .editor-delete { border-color: rgba(255,80,80,0.5); color: #ffd7d7; }
+	.editor-raw summary { cursor: pointer; font-size: 0.72rem; color: #cfdddf; margin-bottom: 0.3rem; }
+	.editor-output { margin: 0; padding: 0.55rem; border-radius: 6px; background: #0b1114; color: #dff3ff; font-size: 0.68rem; line-height: 1.4; white-space: pre; overflow: auto; }
+	.is-editing-hotspots .hero-hotspots { cursor: crosshair; }
+	.is-editing-hotspots .hotspot-dot { cursor: grab; }
+	.is-editing-hotspots .hotspot-dot:active { cursor: grabbing; }
+	.is-editing-hotspots.placing-hotspot .hero-hotspots { cursor: copy; }
+
 	.score-summary { display: grid; place-self: center; grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin-bottom: 2vh; padding: 1.5rem clamp(1.25rem, 7vw, 7rem);  }
 	.score-summary div { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.3rem 1rem; border-right: 1px solid var(--line); }
 	.score-summary div:last-child { border: 0; }

@@ -3,20 +3,19 @@ import ProductInventory from '../components/ProductInventory.astro';
 import Layout from '../layouts/Layout.astro';
 import { getBicycles } from '../data/bicycles';
 import { base } from 'astro:config/client';
+import rentHero from '../assets/rent_hero.webp';
 
 const bicycles = await getBicycles();
 const rentableBikes = bicycles.filter((bike) => bike.isRentable);
 ---
 
 <Layout title="Rent a Verified Bike | VO2 Bikes" description="Rent quality-checked road and gravel bikes, each one inspected and independently scored out of 100 before it reaches you.">
-	<section class="home-hero hero-band" aria-labelledby="home-title">
+	<section class="home-hero hero-band" aria-labelledby="home-title" style={`--hero-bg: #090d10 url(${rentHero.src}) center bottom / cover no-repeat`}>
 		<div class="hero-copy">
 			<p class="eyebrow">The rental fleet · Est. 2026</p>
 			<h1 class="display-heading" id="home-title">Rent <span>more.</span><br />Own <span>less.</span></h1>
 			<p class="lead">The same quality-checked road and gravel bikes, carefully inspected, independently scored out of 100, and ready to rent for your next ride.</p>
-			<div class="hero-actions">
-				<a class="button-primary" href={`${base}inspection/`}>How we inspect <span aria-hidden="true">↗</span></a>
-			</div>
+
 		</div>
 	</section>
 
