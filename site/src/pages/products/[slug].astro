@@ -72,6 +72,10 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			) : (
 				<span class="button-primary enquiry-button is-disabled" aria-disabled="true">Sold out</span>
 			)}
+			<button class="share-btn" type="button" data-share-url={`${base}products/${bike.slug}/`} aria-label={`Copy link for ${bike.name}`}>
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+				<span class="share-btn-text">Share this bike</span>
+			</button>
 			<a class="inspection-link" href="#inspection">Read the full inspection <span aria-hidden="true">↓</span></a>
 		</aside>
 	</section>
@@ -91,6 +95,30 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			const line = document.querySelector('[data-price-line]');
 			if (line) line.hidden = true;
 		})();
+	</script>
+	<script is:inline>
+		document.querySelectorAll('.share-btn[data-share-url]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const url = new URL(btn.dataset.shareUrl || '', window.location.origin).href;
+				const label = btn.querySelector('.share-btn-text');
+				try {
+					await navigator.clipboard.writeText(url);
+				} catch {
+					const input = document.createElement('input');
+					input.value = url;
+					document.body.appendChild(input);
+					input.select();
+					document.execCommand('copy');
+					input.remove();
+				}
+				if (label) {
+					const original = label.textContent;
+					label.textContent = 'Copied!';
+					btn.classList.add('is-copied');
+					setTimeout(() => { label.textContent = original; btn.classList.remove('is-copied'); }, 1600);
+				}
+			});
+		});
 	</script>
 
 	{specs.length > 0 && (
@@ -280,6 +308,9 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.score-track > span { display: block; height: 100%; background: var(--signal); }
 	.enquiry-button { width: 100%; }
 	.enquiry-button.is-disabled, .enquiry-button.is-disabled:hover { border-color: var(--line); background: transparent; color: var(--muted); cursor: not-allowed; }
+	.share-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; width: 100%; margin-top: 0.75rem; padding: 0.8rem 1rem; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--paper); font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.share-btn:hover, .share-btn:focus-visible { border-color: rgba(131,229,220,0.5); background: rgba(131,229,220,0.08); outline: none; }
+	.share-btn.is-copied { color: var(--signal); border-color: rgba(131,229,220,0.5); }
 	.inspection-link { display: block; margin-top: 1rem; color: var(--paper); font-size: 0.7rem; text-align: center; text-decoration-color: var(--signal); text-underline-offset: 4px; }
 	.inspection-link span { margin-left: 0.35rem; color: var(--signal); }
 	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); border-top: 1px solid var(--line) }

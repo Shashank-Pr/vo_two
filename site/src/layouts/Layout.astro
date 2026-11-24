@@ -146,7 +146,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			}
 			/* Every top-level page hero uses this band, so the transparent area
 			   above the first opaque section is the same height everywhere. */
-			.hero-band { display: flex; flex-direction: column; justify-content: center; min-height: var(--hero-band-min); }
+			.hero-band { display: flex; flex-direction: column; justify-content: flex-start; min-height: var(--hero-band-min); }
 			@media (max-width: 760px) { :root { --hero-band-min: min(560px, calc(100svh - 150px)); } }
 			* { box-sizing: border-box; }
 			html { min-width: 320px; scroll-behavior: smooth; }
@@ -247,6 +247,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			.eyebrow::before { width: 25px; height: 1px; background: currentColor; content: ''; }
 			.display-heading { margin: 1rem 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2.4rem, 6.6vw, 5.6rem); font-weight: 700; line-height: 0.9; text-transform: uppercase; }
 			.display-heading span { color: var(--signal); }
+			.hero-copy .display-heading, .intro-inner .display-heading { font-size: clamp(2.4rem, 5.2vw, 5.6rem); }
 			.lead { max-width: 570px; color: #d4e0e2; font-size: 1rem; line-height: 1.75; }
 			.site-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.75rem clamp(1.25rem, 5vw, 5.5rem); border-top: 1px solid var(--line); background: rgba(7, 10, 12, 0.9); color: var(--muted); font-size: 0.72rem; }
 			.site-footer p { margin: 0; }

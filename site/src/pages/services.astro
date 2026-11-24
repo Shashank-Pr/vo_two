@@ -6,6 +6,7 @@ import level1Photo from '../assets/level1_package.avif';
 import level2Photo from '../assets/Level2_service.jpeg';
 import level3Photo from '../assets/level3.avif';
 import carbonPhoto from '../assets/carbon_service_image.jpeg';
+import servicesHero from '../assets/services_hero.webp';
 import { whatsappHref } from '../data/contact';
 
 const bookHref = whatsappHref("Hi VO2 Bikes, I'd like to book a service.");
@@ -122,15 +123,11 @@ const services: ServicePackage[] = [
 ---
 
 <Layout title="Bicycle Care & Servicing | VO2 Bikes" description="Professional bike servicing from VO2 Bikes — essential care, performance care, complete overhauls and specialist carbon cockpit care.">
-	<section class="page-intro hero-band">
+	<section class="page-intro hero-band" style={`--hero-bg: #090d10 url(${servicesHero.src}) center bottom / cover no-repeat`}>
 		<div class="intro-inner">
 			<p class="eyebrow">Bicycle care / servicing &amp; maintenance</p>
 			<h1 class="display-heading">Your <span> bike.</span> <br> Our <span> care.</span></h1>
 			<p class="lead">At VO<sub>2</sub> Bikes, we offer professional bicycle servicing and maintenance designed to keep your bike clean, finely tuned and ready for the road ahead.</p>
-			<div class="intro-actions">
-				<a class="button-primary" href="#packages">Explore our service packages <span aria-hidden="true">↓</span></a>
-				<a class="button-secondary" href={bookHref} target="_blank" rel="noopener noreferrer">Book a service <span aria-hidden="true">↗</span></a>
-			</div>
 		</div>
 	</section>
 

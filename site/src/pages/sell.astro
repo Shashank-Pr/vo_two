@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { contactEmail } from '../data/contact';
+import sellHero from '../assets/sell_hero.webp';
 
 const currentYear = new Date().getFullYear();
 const maxYear = currentYear + 1;
@@ -21,7 +22,7 @@ const photoChecklist = [
 ---
 
 <Layout title="Sell Your Bike | VO2 Bikes" description="Sell your well-kept pre-owned road or gravel bike to VO2 Bikes. Share your bike details and photos for an initial review.">
-	<section class="page-intro hero-band">
+	<section class="page-intro hero-band" style={`--hero-bg: #090d10 url(${sellHero.src}) center 42% / cover no-repeat`}>
 		<div class="intro-inner">
 			<p class="eyebrow">Sell / We're always buying</p>
 			<h1 class="display-heading">Better <span>deal. <br></span> Better <span>sell.</span></h1>
@@ -173,7 +174,8 @@ const photoChecklist = [
 </Layout>
 
 <style>
-	.page-intro { max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; background: var(--hero-bg); }
+	.page-intro { position: relative; max-width: 1440px; margin: 0 auto; padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; background: var(--hero-bg); }
+	.page-intro > * { position: relative; z-index: 1; }
 	.page-intro .lead { margin: 1.2rem 0 0; }
 
 	.sell-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 2.25rem clamp(1.25rem, 10vw, 10rem); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(12, 17, 20, 0.94); }
@@ -219,7 +221,18 @@ const photoChecklist = [
 	.sell-facts strong { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; }
 
 	@media (max-width: 760px) {
-		.page-intro { padding: 3.5rem 1.4rem 2.5rem;   }
+		.page-intro { padding: 3.5rem 1.4rem 2.5rem; }
+		/* Narrow viewports crop the hero photo to its middle, which puts the
+		   copy over the brightest part of the fire. Fade the bottom half so the
+		   heading and lead stay readable. */
+		.page-intro::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			z-index: 0;
+			pointer-events: none;
+			background: linear-gradient(180deg, rgba(9, 13, 16, 0) 28%, rgba(9, 13, 16, 0.45) 58%, rgba(9, 13, 16, 0.85) 100%);
+		}
 		.sell-steps { grid-template-columns: 1fr; gap: 1.3rem; }
 		.sell-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
 		.sell-form { grid-template-columns: 1fr; }
