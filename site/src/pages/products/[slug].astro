@@ -15,7 +15,12 @@ export async function getStaticPaths() {
 	}));
 }
 
-const { bike } = Astro.props;
+// Detail pages are prerendered, so Astro.props can hold the price from the
+// last build. Fetch the current Sanity record on every render and use that
+// instead, while keeping getStaticPaths() for the stable URL list.
+const { slug } = Astro.params;
+const currentBikes = await getBicycles();
+const bike = currentBikes.find((candidate) => candidate.slug === slug) ?? Astro.props.bike;
 const gallery = [bike.image, ...bike.gallery];
 const specs = bike.specList ?? [];
 const purchaseMessage = `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}) listed at ${bike.priceLabel}. Is it still available?`;
@@ -40,6 +45,9 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 				/>
 				<div class="magnifier" aria-hidden="true"></div>
 				<figcaption class="gallery-count">01 / {String(gallery.length).padStart(2, '0')}</figcaption>
+				<button class="gallery-share" type="button" data-share-url={`${base}products/${bike.slug}/`} aria-label={`Copy link for ${bike.name}`}>
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+				</button>
 			</figure>
 			<div class="gallery-thumbs" aria-label={`${bike.name} photo thumbnails`}>
 				{gallery.map((image, index) => (
@@ -63,7 +71,13 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			<h1 class="display-heading">{bike.name}</h1>
 			<p class="product-description">{bike.description}</p>
 			<div class="price-score">
-				<div data-price-line><span>Asking price</span><strong>{bike.priceLabel}</strong></div>
+				<div data-price-line>
+					<span>Asking price</span>
+					<p class="detail-price">
+						{bike.newBikePriceLabel && <s>{bike.newBikePriceLabel}</s>}
+						<strong>{bike.priceLabel}</strong>
+					</p>
+				</div>
 				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
 			</div>
 			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
@@ -72,10 +86,6 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			) : (
 				<span class="button-primary enquiry-button is-disabled" aria-disabled="true">Sold out</span>
 			)}
-			<button class="share-btn" type="button" data-share-url={`${base}products/${bike.slug}/`} aria-label={`Copy link for ${bike.name}`}>
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-				<span class="share-btn-text">Share this bike</span>
-			</button>
 			<a class="inspection-link" href="#inspection">Read the full inspection <span aria-hidden="true">↓</span></a>
 		</aside>
 	</section>
@@ -97,10 +107,20 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 		})();
 	</script>
 	<script is:inline>
-		document.querySelectorAll('.share-btn[data-share-url]').forEach((btn) => {
+		const shareToast = document.querySelector('.share-toast');
+		let shareToastTimer;
+		function showShareToast() {
+			if (!shareToast) return;
+			shareToast.classList.add('is-visible');
+			window.clearTimeout(shareToastTimer);
+			shareToastTimer = window.setTimeout(() => shareToast.classList.remove('is-visible'), 2200);
+		}
+
+		document.querySelectorAll('.share-btn[data-share-url], .gallery-share[data-share-url]').forEach((btn) => {
 			btn.addEventListener('click', async () => {
 				const url = new URL(btn.dataset.shareUrl || '', window.location.origin).href;
 				const label = btn.querySelector('.share-btn-text');
+				const originalAriaLabel = btn.getAttribute('aria-label');
 				try {
 					await navigator.clipboard.writeText(url);
 				} catch {
@@ -111,11 +131,18 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 					document.execCommand('copy');
 					input.remove();
 				}
+				btn.classList.add('is-copied');
+				showShareToast();
 				if (label) {
 					const original = label.textContent;
 					label.textContent = 'Copied!';
-					btn.classList.add('is-copied');
 					setTimeout(() => { label.textContent = original; btn.classList.remove('is-copied'); }, 1600);
+				} else {
+					btn.setAttribute('aria-label', 'Link copied');
+					setTimeout(() => {
+						if (originalAriaLabel) btn.setAttribute('aria-label', originalAriaLabel);
+						btn.classList.remove('is-copied');
+					}, 1600);
 				}
 			});
 		});
@@ -266,6 +293,9 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			activate(thumbs[0]);
 		}
 	</script>
+	<div class="share-toast" role="status" aria-live="polite" aria-atomic="true">
+		<span aria-hidden="true">✓</span> Link copied to clipboard
+	</div>
 </Layout>
 
 <style>
@@ -288,6 +318,9 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.gallery-canvas { position: relative; margin: 0; overflow: hidden; background: #151d20; aspect-ratio: 4 / 3; cursor: crosshair; }
 	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white}
 	.gallery-canvas.is-magnifying { cursor: none; }
+	.gallery-share { position: absolute; z-index: 3; top: 0.75rem; right: 0.75rem; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.86); color: var(--paper); cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.gallery-share:hover, .gallery-share:focus-visible { color: var(--signal); border-color: var(--signal); background: rgba(7, 13, 15, 0.96); outline: none; }
+	.gallery-share.is-copied { color: var(--signal); border-color: var(--signal); }
 	.magnifier { position: absolute; left: 0; top: 0; width: clamp(120px, 24vw, 190px); aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(241, 247, 248, 0.95); box-shadow: 0 0 0 1px rgba(9, 13, 16, 0.7), 0 6px 24px rgba(0, 0, 0, 0.55); background-repeat: no-repeat; pointer-events: none; opacity: 0; transform: translate(-50%, -50%); transition: opacity 120ms ease; z-index: 2; }
 	.magnifier.is-on { opacity: 1; }
 	.product-gallery figcaption { position: absolute; right: 0.7rem; bottom: 0.7rem; padding: 0.4rem 0.5rem; background: rgba(7, 13, 15, 0.8); color: var(--paper); font-size: 0.6rem; z-index: 3; }
@@ -300,6 +333,8 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.price-score div { display: grid; gap: 0.35rem; }
 	.price-score span { color: var(--muted); font-size: 0.62rem; }
 	.price-score strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
+	.price-score .detail-price { display: flex; align-items: baseline; gap: 0.5rem; margin: 0; }
+	.price-score .detail-price s { color: var(--muted); font-size: 1rem; text-decoration-thickness: 1px; white-space: nowrap; }
 	.price-score [data-price-line][hidden] { display: none; }
 	.price-score .score-summary { margin-left: auto; text-align: right; }
 	.score-summary strong { color: var(--signal); }
@@ -311,6 +346,9 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.share-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; width: 100%; margin-top: 0.75rem; padding: 0.8rem 1rem; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--paper); font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
 	.share-btn:hover, .share-btn:focus-visible { border-color: rgba(131,229,220,0.5); background: rgba(131,229,220,0.08); outline: none; }
 	.share-btn.is-copied { color: var(--signal); border-color: rgba(131,229,220,0.5); }
+	.share-toast { position: fixed; z-index: 50; right: 1.25rem; bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border: 1px solid var(--signal); background: rgba(8, 12, 15, 0.96); color: var(--paper); font-size: 0.72rem; font-weight: 700; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; pointer-events: none; }
+	.share-toast span { color: var(--signal); }
+	.share-toast.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
 	.inspection-link { display: block; margin-top: 1rem; color: var(--paper); font-size: 0.7rem; text-align: center; text-decoration-color: var(--signal); text-underline-offset: 4px; }
 	.inspection-link span { margin-left: 0.35rem; color: var(--signal); }
 	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); border-top: 1px solid var(--line) }
@@ -343,5 +381,7 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 		.product-layout { padding-right: 1rem; padding-left: 1rem; }
 		.spec-list { grid-template-columns: 1fr; }
 		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
+		.share-toast { right: 1rem; bottom: 1rem; left: 1rem; justify-content: center; }
+		.gallery-share { top: 0.5rem; right: 0.5rem; width: 30px; height: 30px; }
 	}
 </style>

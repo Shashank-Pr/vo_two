@@ -1,6 +1,5 @@
 ---
 import { getBicycles, urlFor, type Bicycle } from '../data/bicycles';
-import { whatsappHref } from '../data/contact';
 import { base } from 'astro:config/client';
 
 interface Props {
@@ -21,10 +20,6 @@ const featured = [...bicycles].sort(
 	(a, b) => Number(b.available) - Number(a.available) || a.name.localeCompare(b.name),
 );
 const unavailableLabel = isRent ? 'UNAVAILABLE' : 'SOLD OUT';
-const enquiryMessage = (bike: Bicycle) =>
-	isRent
-		? `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.year}). Could you share the rental details and availability?`
-		: `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}). Is it still available?`;
 
 /** Detail links carry the view mode so the nav can highlight the right tab. */
 const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '?mode=rent' : ''}`;
@@ -64,46 +59,49 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 <div class="bike-grid" id="bike-grid">
 	{featured.map((bike) => (
 		<article class="bike-card" data-name={bike.name.toLowerCase()} data-score={bike.score} data-price={bike.price} data-year={bike.year}>
-			<a class="bike-photo" href={detailHref(bike)} aria-label={`View details for ${bike.name}`}>
-				<img src={urlFor(bike.image).width(900).url()} alt={bike.alt} loading="lazy" />
-				<span class="bike-year">{bike.year}</span>
-				{bike.available ? (
-					<span class="verified-tag"><span aria-hidden="true">✓</span> INSPECTED</span>
-				) : (
-					<span class="verified-tag sold-out">{unavailableLabel}</span>
-				)}
-			</a>
+			<div class="bike-photo-wrap">
+				<a class="bike-photo" href={detailHref(bike)} aria-label={`View details for ${bike.name}`}>
+					<img src={urlFor(bike.image).width(900).url()} alt={bike.alt} loading="lazy" />
+					<span class="bike-year">{bike.year}</span>
+					{bike.available ? (
+						<span class="verified-tag"><span aria-hidden="true">✓</span> INSPECTED</span>
+					) : (
+						<span class="verified-tag sold-out">{unavailableLabel}</span>
+					)}
+				</a>
+				<button class="bike-share" type="button" data-share-url={detailHref(bike)} aria-label={`Copy link for ${bike.name}`}>
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+				</button>
+			</div>
 			<div class="bike-details">
 				<div class="bike-title-row">
 					<div><h3><a class="bike-title-link" href={detailHref(bike)}>{bike.name}</a></h3></div>
-					<button class="share-btn" type="button" data-share-url={detailHref(bike)} aria-label={`Copy link for ${bike.name}`}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-						<span class="share-btn-text">Share</span>
-					</button>
 				</div>
 				{!isRent && (
-					<div class="bike-price"><strong>{bike.priceLabel}</strong></div>
+					<div class="bike-price">
+						{bike.newBikePriceLabel && <s>{bike.newBikePriceLabel}</s>}
+						<strong>{bike.priceLabel}</strong>
+					</div>
 				)}
 				<div class="bike-meta">
 					<span>Inspection score</span>
-					<div class="inspection-score" aria-label={`Inspection score ${bike.score} out of 100`}><strong>{bike.score}</strong><span>/100</span></div>
+					<span class="score-value">
+						<span class="inspection-score" aria-label={`Inspection score ${bike.score} out of 100`}><strong>{bike.score}</strong><span>/100</span></span>
+						<button class="score-toggle" type="button" aria-expanded="false" aria-controls={`inspection-${bike.slug}`} aria-label={`Show inspection details for ${bike.name}`} data-label-show={`Show inspection details for ${bike.name}`} data-label-hide={`Hide inspection details for ${bike.name}`}><span data-score-toggle-icon aria-hidden="true">&gt;&gt;</span></button>
+					</span>
 				</div>
 				<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
-				<a class="details-link" href={detailHref(bike)}>View bike details <span aria-hidden="true">↗</span></a>
-				<details class="inspection-report">
-					<summary>Inspection breakdown</summary>
+				<div class="inspection-report" id={`inspection-${bike.slug}`} hidden>
 					<ul>{bike.checks.map((check) => <li><span>{check.name}</span><strong>{check.score}<small>/{check.max}</small></strong></li>)}</ul>
-				</details>
-				{bike.available ? (
-					<a class="enquire-link" href={whatsappHref(enquiryMessage(bike))} target="_blank" rel="noopener noreferrer">Ask about this bike <span aria-hidden="true">↗</span></a>
-				) : (
-					<span class="enquire-link is-disabled" aria-disabled="true">{unavailableLabel}</span>
-				)}
+				</div>
 			</div>
 		</article>
 	))}
 </div>
 <p class="empty-state" id="empty-state" hidden>No bikes match those filters. Try adjusting your search.</p>
+<div class="share-toast" role="status" aria-live="polite" aria-atomic="true">
+	<span aria-hidden="true">✓</span> Link copied to clipboard
+</div>
 
 <script>
 	const search = document.querySelector<HTMLInputElement>('#bike-search');
@@ -157,10 +155,33 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	minimumScore?.addEventListener('change', updateInventory);
 	sort?.addEventListener('change', updateInventory);
 
-	document.querySelectorAll<HTMLButtonElement>('.share-btn[data-share-url]').forEach((btn) => {
+	document.querySelectorAll<HTMLButtonElement>('.score-toggle[aria-controls]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const panel = document.getElementById(btn.getAttribute('aria-controls') || '');
+			if (!panel) return;
+			const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+			btn.setAttribute('aria-expanded', String(!isExpanded));
+			btn.setAttribute('aria-label', isExpanded ? btn.dataset.labelShow || 'Show inspection details' : btn.dataset.labelHide || 'Hide inspection details');
+			const icon = btn.querySelector<HTMLElement>('[data-score-toggle-icon]');
+			if (icon) icon.textContent = isExpanded ? '>>' : '<<';
+			panel.hidden = isExpanded;
+		});
+	});
+
+	const shareToast = document.querySelector<HTMLElement>('.share-toast');
+	let shareToastTimer: number | undefined;
+	function showShareToast() {
+		if (!shareToast) return;
+		shareToast.classList.add('is-visible');
+		window.clearTimeout(shareToastTimer);
+		shareToastTimer = window.setTimeout(() => shareToast.classList.remove('is-visible'), 2200);
+	}
+
+	document.querySelectorAll<HTMLButtonElement>('.share-btn[data-share-url], .bike-share[data-share-url]').forEach((btn) => {
 		btn.addEventListener('click', async () => {
 			const url = new URL(btn.dataset.shareUrl || '', window.location.origin).href;
 			const label = btn.querySelector<HTMLElement>('.share-btn-text');
+			const originalAriaLabel = btn.getAttribute('aria-label');
 			try {
 				await navigator.clipboard.writeText(url);
 			} catch {
@@ -171,11 +192,18 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 				document.execCommand('copy');
 				input.remove();
 			}
+			btn.classList.add('is-copied');
+			showShareToast();
 			if (label) {
 				const original = label.textContent;
 				label.textContent = 'Copied!';
-				btn.classList.add('is-copied');
 				setTimeout(() => { label.textContent = original; btn.classList.remove('is-copied'); }, 1600);
+			} else {
+				btn.setAttribute('aria-label', 'Link copied');
+				setTimeout(() => {
+					if (originalAriaLabel) btn.setAttribute('aria-label', originalAriaLabel);
+					btn.classList.remove('is-copied');
+				}, 1600);
 			}
 		});
 	});
@@ -198,8 +226,12 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	.bike-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; max-width: 1440px; margin: 0 auto; }
 	.bike-card { min-width: 0; border: 1px solid rgba(226, 242, 244, 0.16); background: var(--panel); animation: card-arrive 420ms ease both; }
 	.bike-card[hidden] { display: none; }
-	.bike-photo { position: relative; display: block; height: auto; aspect-ratio: 4 / 3; overflow: hidden; background: #151d20; }
+	.bike-photo-wrap { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #151d20; }
+	.bike-photo { position: absolute; inset: 0; display: block; }
 	.bike-photo::after { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(5, 9, 12, 0.58)); content: ''; pointer-events: none; }
+	.bike-share { position: absolute; z-index: 2; top: 0.5rem; right: 0.5rem; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.86); color: var(--paper); cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.bike-share:hover, .bike-share:focus-visible { color: var(--signal); border-color: var(--signal); background: rgba(7, 13, 15, 0.96); outline: none; }
+	.bike-share.is-copied { color: var(--signal); border-color: var(--signal); }
 	.bike-photo img { width: 100%; height: 100%; background-color: white ; object-fit: contain; filter: saturate(0.76); transition: transform 350ms ease, filter 350ms ease; }
 	.bike-card:hover .bike-photo img { filter: saturate(1); transform: scale(1.04); }
 	.bike-year { position: absolute; z-index: 1; bottom: 0.8rem; left: 0.9rem; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; }
@@ -212,6 +244,9 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	.share-btn:hover, .share-btn:focus-visible { color: var(--paper); border-color: rgba(131,229,220,0.5); background: rgba(131,229,220,0.08); outline: none; }
 	.share-btn.is-copied { color: var(--signal); border-color: rgba(131,229,220,0.5); }
 	.share-btn svg { flex-shrink: 0; }
+	.share-toast { position: fixed; z-index: 50; right: 1.25rem; bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border: 1px solid var(--signal); background: rgba(8, 12, 15, 0.96); color: var(--paper); font-size: 0.72rem; font-weight: 700; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; pointer-events: none; }
+	.share-toast span { color: var(--signal); }
+	.share-toast.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
 	.bike-eyebrow { margin: 0 0 0.35rem; color: var(--signal); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 	.bike-title-row h3 { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; line-height: 1; text-transform: uppercase; }
 	.bike-title-link { color: inherit; text-decoration: none; }
@@ -219,25 +254,22 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	.inspection-score { display: flex; align-items: baseline; gap: 0.16rem; white-space: nowrap; }
 	.inspection-score strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; line-height: 1; }
 	.inspection-score span { color: var(--muted); font-size: 0.56rem; }
+	.bike-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-top: 0.8rem; padding-top: 0.75rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.65rem; }
+	.score-value { display: inline-flex; align-items: baseline; gap: 0.5rem; }
+	.bike-price { display: flex; align-items: baseline; justify-content: flex-start; gap: 0.45rem; margin-top: 0.6rem; text-align: left ; }
+	.bike-price s { color: var(--muted); font-size: 0.9rem; text-decoration-thickness: 1px; white-space: nowrap; }
+	.bike-price strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.55rem; line-height: 1; white-space: nowrap; }
 	.score-track { height: 3px; margin-top: 0.8rem; background: rgba(226, 242, 244, 0.14); }
 	.score-track span { display: block; height: 100%; background: var(--signal); }
-	.bike-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-top: 0.8rem; padding-top: 0.75rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.65rem; }
-	.bike-price { display: flex; align-items: baseline; justify-content: flex-start; margin-top: 0.6rem; text-align: left ; }
-	.bike-price strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.55rem; line-height: 1; white-space: nowrap; }
-	.details-link { display: flex; align-items: center; justify-content: space-between; margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); color: var(--paper); font-size: 0.68rem; font-weight: 700; text-decoration: none; }
-	.details-link span { color: var(--signal); }
-	.inspection-report { margin-top: 0.75rem; border-top: 1px solid var(--line); }
-	.inspection-report summary { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.75rem 0 0.15rem; color: var(--paper); cursor: pointer; font-size: 0.66rem; font-weight: 700; list-style: none; }
-	.inspection-report summary::-webkit-details-marker { display: none; }
-	.inspection-report summary::after { color: var(--signal); content: '+'; font-size: 1rem; line-height: 0.8; }
-	.inspection-report[open] summary::after { content: '−'; }
-	.inspection-report ul { display: grid; gap: 0.38rem; margin: 0.75rem 0; padding: 0; list-style: none; }
+	.score-toggle { display: inline-grid; place-items: center; width: 20px; height: 18px; padding: 0; border: 1px solid rgba(131, 229, 220, 0.45); background: transparent; color: var(--signal); font: inherit; font-family: monospace; font-size: 0.62rem; font-weight: 700; line-height: 1; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.score-toggle:hover, .score-toggle:focus-visible { color: var(--paper); border-color: var(--signal); background: rgba(131, 229, 220, 0.1); outline: none; }
+	.score-toggle[aria-expanded='true'] { color: var(--paper); border-color: var(--signal); background: rgba(131, 229, 220, 0.12); }
+	.inspection-report { margin-top: 0.65rem; }
+	.inspection-report[hidden] { display: none; }
+	.inspection-report ul { display: grid; gap: 0.38rem; margin: 0; padding: 0; list-style: none; }
 	.inspection-report li { display: flex; justify-content: space-between; gap: 0.6rem; color: var(--muted); font-size: 0.62rem; }
 	.inspection-report li strong { color: var(--paper); font-size: 0.64rem; }
 	.inspection-report li small { color: var(--muted); font-size: 0.58rem; }
-	.enquire-link { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.6rem; padding-top: 0.7rem; border-top: 1px solid var(--line); color: var(--paper); font-size: 0.68rem; font-weight: 700; text-decoration-color: var(--signal); text-underline-offset: 4px; }
-	.enquire-link span { color: var(--signal); }
-	.enquire-link.is-disabled { color: var(--muted); cursor: not-allowed; }
 	.empty-state { max-width: 1440px; margin: 2rem auto; padding: 2rem; border: 1px dashed var(--line); color: var(--muted); text-align: center; }
 	.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 	@keyframes card-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -256,6 +288,7 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 		.result-count { flex-basis: 100%; }
 		.bike-grid { gap: 0.55rem; }
 		.bike-year { bottom: 0.5rem; left: 0.55rem; font-size: 1rem; }
+		.bike-share { top: 0.35rem; right: 0.35rem; width: 26px; height: 26px; }
 		.verified-tag { top: 0; left: 0; padding: 0.28rem 0.4rem; font-size: 0.48rem; letter-spacing: 0.06em; }
 		.verified-tag span { font-size: 0.6rem; }
 		.bike-details { padding: 0.6rem 0.6rem 0.55rem; }
@@ -264,15 +297,17 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 		.inspection-score strong { font-size: 1rem; }
 		.inspection-score span { font-size: 0.46rem; }
 		.score-track { margin-top: 0.5rem; }
-		.bike-meta { flex-direction: column; align-items: flex-start; gap: 0.15rem; margin-top: 0.5rem; padding-top: 0.5rem; font-size: 0.55rem; }
+		.bike-meta { gap: 0.35rem; margin-top: 0.5rem; padding-top: 0.5rem; font-size: 0.55rem; }
+		.score-value { gap: 0.3rem; }
+		.score-toggle { width: 18px; height: 16px; font-size: 0.55rem; }
+		.bike-price { gap: 0.3rem; }
+		.bike-price s { font-size: 0.72rem; }
 		.bike-price strong { font-size: 1.05rem; }
-			.details-link, .enquire-link { margin-top: 0.5rem; padding-top: 0.5rem; font-size: 0.58rem; }
 		.inspection-report { margin-top: 0.5rem; }
-		.inspection-report summary { padding: 0.55rem 0 0.1rem; font-size: 0.56rem; }
-		.inspection-report summary::after { font-size: 0.85rem; }
-		.inspection-report ul { gap: 0.3rem; margin: 0.5rem 0; }
+		.inspection-report ul { gap: 0.3rem; }
 		.inspection-report li { font-size: 0.54rem; }
 		.inspection-report li strong { font-size: 0.56rem; }
 		.inspection-report li small { font-size: 0.5rem; }
+		.share-toast { right: 1rem; bottom: 1rem; left: 1rem; justify-content: center; }
 	}
 </style>
