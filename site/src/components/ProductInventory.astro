@@ -59,6 +59,7 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 <div class="bike-grid" id="bike-grid">
 	{featured.map((bike) => (
 		<article class="bike-card" data-name={bike.name.toLowerCase()} data-score={bike.score} data-price={bike.price} data-year={bike.year}>
+			<a class="card-link" href={detailHref(bike)} aria-hidden="true" tabindex="-1"></a>
 			<div class="bike-photo-wrap">
 				<a class="bike-photo" href={detailHref(bike)} aria-label={`View details for ${bike.name}`}>
 					<img src={urlFor(bike.image).width(900).url()} alt={bike.alt} loading="lazy" />
@@ -224,12 +225,13 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	.result-count { min-width: 116px; margin: 0; padding: 0 0.5rem; color: var(--muted); font-size: 0.68rem; text-align: right; }
 	.result-count span { color: var(--paper); font-weight: 700; }
 	.bike-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; max-width: 1440px; margin: 0 auto; }
-	.bike-card { min-width: 0; border: 1px solid rgba(226, 242, 244, 0.16); background: var(--panel); animation: card-arrive 420ms ease both; }
+	.bike-card { position: relative; min-width: 0; border: 1px solid rgba(226, 242, 244, 0.16); background: var(--panel); animation: card-arrive 420ms ease both; }
 	.bike-card[hidden] { display: none; }
+	.card-link { position: absolute; inset: 0; z-index: 2; cursor: pointer; }
 	.bike-photo-wrap { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #151d20; }
 	.bike-photo { position: absolute; inset: 0; display: block; }
 	.bike-photo::after { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(5, 9, 12, 0.58)); content: ''; pointer-events: none; }
-	.bike-share { position: absolute; z-index: 2; top: 0.5rem; right: 0.5rem; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.86); color: var(--paper); cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.bike-share { position: absolute; z-index: 3; top: 0.5rem; right: 0.5rem; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.86); color: var(--paper); cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
 	.bike-share:hover, .bike-share:focus-visible { color: var(--signal); border-color: var(--signal); background: rgba(7, 13, 15, 0.96); outline: none; }
 	.bike-share.is-copied { color: var(--signal); border-color: var(--signal); }
 	.bike-photo img { width: 100%; height: 100%; background-color: white ; object-fit: contain; filter: saturate(0.76); transition: transform 350ms ease, filter 350ms ease; }
@@ -250,7 +252,7 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	.bike-eyebrow { margin: 0 0 0.35rem; color: var(--signal); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 	.bike-title-row h3 { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; line-height: 1; text-transform: uppercase; }
 	.bike-title-link { color: inherit; text-decoration: none; }
-	.bike-title-link:hover { color: var(--signal); }
+	.bike-title-link:hover, .bike-card:hover .bike-title-link { color: var(--signal); }
 	.inspection-score { display: flex; align-items: baseline; gap: 0.16rem; white-space: nowrap; }
 	.inspection-score strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; line-height: 1; }
 	.inspection-score span { color: var(--muted); font-size: 0.56rem; }
@@ -261,7 +263,7 @@ const detailHref = (bike: Bicycle) => `${base}products/${bike.slug}/${isRent ? '
 	.bike-price strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.55rem; line-height: 1; white-space: nowrap; }
 	.score-track { height: 3px; margin-top: 0.8rem; background: rgba(226, 242, 244, 0.14); }
 	.score-track span { display: block; height: 100%; background: var(--signal); }
-	.score-toggle { display: inline-grid; place-items: center; width: 20px; height: 18px; padding: 0; border: 1px solid rgba(131, 229, 220, 0.45); background: transparent; color: var(--signal); font: inherit; font-family: monospace; font-size: 0.62rem; font-weight: 700; line-height: 1; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.score-toggle { position: relative; z-index: 3; display: inline-grid; place-items: center; width: 20px; height: 18px; padding: 0; border: 1px solid rgba(131, 229, 220, 0.45); background: transparent; color: var(--signal); font: inherit; font-family: monospace; font-size: 0.62rem; font-weight: 700; line-height: 1; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
 	.score-toggle:hover, .score-toggle:focus-visible { color: var(--paper); border-color: var(--signal); background: rgba(131, 229, 220, 0.1); outline: none; }
 	.score-toggle[aria-expanded='true'] { color: var(--paper); border-color: var(--signal); background: rgba(131, 229, 220, 0.12); }
 	.inspection-report { margin-top: 0.65rem; }
