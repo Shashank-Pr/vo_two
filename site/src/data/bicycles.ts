@@ -33,6 +33,8 @@ interface SanityBicycleRecord {
 	slug: string;
 	name: string;
 	year: number;
+	/** Original/new-bike price, shown struck through beside our price. */
+	newBikePrice?: number;
 	price: number;
 	image: SanityImageSource;
 	alt: string;
@@ -57,6 +59,7 @@ export interface Bicycle extends SanityBicycleRecord {
 		criteria: string[];
 	}>;
 	score: number;
+	newBikePriceLabel?: string;
 	priceLabel: string;
 }
 
@@ -69,6 +72,7 @@ const BICYCLES_QUERY = defineQuery(`
 		"slug": slug,
 		name,
 		year,
+		newBikePrice,
 		price,
 		image { asset, hotspot, crop },
 		alt,
@@ -130,6 +134,7 @@ export async function getBicycles(): Promise<Bicycle[]> {
 			isRentable: bike.isRentable ?? true,
 			checks,
 			score: checks.reduce((total, check) => total + check.score, 0),
+			newBikePriceLabel: bike.newBikePrice == null ? undefined : formatPrice(bike.newBikePrice),
 			priceLabel: formatPrice(bike.price),
 		};
 	});
