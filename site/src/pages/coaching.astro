@@ -1,0 +1,369 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { whatsappHref } from '../data/contact';
+import coachingBanner from '../assets/coaching_banner_alpine.png';
+import shieldBorder from '../assets/shield_border.png';
+
+const coachingMessage =
+	"Hi VO2 Bikes, I'd like to know more about your coaching — triathlon and swim, bike and run — and how to get started.";
+const triathlonMessage =
+	"Hi VO2 Bikes, I'd like to know more about your triathlon coaching and how to get started.";
+const disciplineMessage = (name: string) =>
+	`Hi VO2 Bikes, I'd like to know more about your ${name.toLowerCase()} coaching and how to get started.`;
+
+/** What a full triathlon plan covers, across all three disciplines. */
+const triathlonFocus = [
+	'One connected weekly plan across swim, bike and run',
+	'Brick sessions and transition-specific training',
+	'Technique feedback for all three disciplines',
+	'Race-day pacing, nutrition and equipment planning',
+	'Training-load and recovery management',
+	'Regular plan reviews as your fitness and goal evolve',
+];
+
+/** Standalone coaching, for athletes who want to focus on a single sport. */
+const disciplines = [
+	{
+		emoji: '🏊',
+		level: 'Swim coaching',
+		name: 'Swim',
+		tagline: 'Technique first. Then speed.',
+		description:
+			'Swim with less effort and more confidence. We start with the fundamentals — body position, breathing and stroke efficiency — then build structured pool or open-water sets that turn better technique into sustained speed.',
+		focusLabel: 'What we work on',
+		focus: [
+			'Stroke analysis and targeted drills',
+			'Breathing rhythm and body position',
+			'Open-water sighting, turns and starts',
+			'Progressive endurance and speed sets',
+		],
+		for: 'First-time open-water swimmers and triathletes looking to save time in the water.',
+	},
+	{
+		emoji: '🚴',
+		level: 'Bike coaching',
+		name: 'Bike',
+		tagline: 'Power, patience and precision.',
+		description:
+			'Whether you want a faster road ride or a stronger race split, cycling coaching focusses on what actually moves the needle: sustainable power, cadence, climbing and cornering. Your rides and data shape clear training zones and weeks that balance stress with recovery.',
+		focusLabel: 'What we work on',
+		focus: [
+			'Endurance and threshold development',
+			'Climbing, descending and cornering technique',
+			'Cadence, gearing and efficient pedalling',
+			'Pacing and group-riding confidence',
+		],
+		for: 'Road and gravel riders, time-trialists and triathletes chasing a faster bike split.',
+	},
+	{
+		emoji: '🏃',
+		level: 'Run coaching',
+		name: 'Run',
+		tagline: 'Run stronger, not just harder.',
+		description:
+			'A running plan that builds durability as well as speed. From easy-volume foundations to race-specific intervals, each week is shaped around your goal and your recovery, with close attention to form, load and progression so you keep improving.',
+		focusLabel: 'What we work on',
+		focus: [
+			'Aerobic base and easy running',
+			'Stride, posture and running form',
+			'Tempo, interval and hill sessions',
+			'Race pacing, tapering and recovery',
+		],
+		for: '5K to marathon runners and triathletes who want a stronger run off the bike.',
+	},
+];
+---
+
+<Layout
+	title="Coaching | VO2 Bikes"
+	description="Triathlon coaching and dedicated swim, bike and run coaching from VO2 Bikes. Integrated plans, brick sessions and race-day readiness built around you."
+>
+	<section class="coaching-hero" aria-label="VO2 Bikes coaching">
+		<div class="coaching-banner">
+			<img src={coachingBanner.src} alt="VO2 Bikes coaching" />
+			<div class="coaching-banner-copy">
+				<p class="eyebrow">Train with Purpose.</p>
+				<h1 class="display-heading">TRAIN <span>SMART.</span><br />RACE <span>STRONG.</span></h1>
+				<p class="lead">Performance Starts Here.</p>
+				<p class="coaching-disciplines" style={`--shield-mask: url(${shieldBorder.src})`} aria-label="Swim, Bike, Run">
+					<span class="discipline-icon" aria-hidden="true">
+						<span class="shield-shape"></span>
+						<span class="discipline-emoji">🏊</span>
+					</span>
+					<span class="pipe" aria-hidden="true">|</span>
+					<span class="discipline-icon" aria-hidden="true">
+						<span class="shield-shape"></span>
+						<span class="discipline-emoji">🚴</span>
+					</span>
+					<span class="pipe" aria-hidden="true">|</span>
+					<span class="discipline-icon" aria-hidden="true">
+						<span class="shield-shape"></span>
+						<span class="discipline-emoji">🏃</span>
+					</span>
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="coaching-copy-section">
+		<div class="coaching-copy">
+			<p class="lead">
+				Build fitness with purpose. We coach complete triathletes and single-sport
+				athletes alike — whether you're chasing a first triathlon, a faster 10K, a stronger
+				bike split or simply more confident weekend rides, we'll shape training around
+				where you are and where you want to go.
+			</p>
+			<a class="button-primary coaching-cta" href={whatsappHref(coachingMessage)} target="_blank" rel="noopener noreferrer">
+				Talk to a coach <span aria-hidden="true">↗</span>
+			</a>
+		</div>
+	</section>
+
+	<section class="coaching-feature" id="triathlon" aria-labelledby="triathlon-title">
+		<div class="feature-inner">
+			<div class="section-heading">
+				<div>
+					<p class="eyebrow">Triathlon coaching</p>
+					<h2 id="triathlon-title">One plan. Three <span>disciplines.</span></h2>
+				</div>
+				<p>
+					Built around the race you want to do and the life you actually live — not a
+					template. Every session has a reason, and every week connects back to your goal.
+				</p>
+			</div>
+
+			<div class="feature-body">
+				<div class="feature-copy">
+					<p>
+						Triathlon is more than three sports added together. It's knowing how to move
+						between them without losing speed, energy or focus. Our triathlon coaching
+						builds you as a complete athlete, not as three separate ones.
+					</p>
+					<p>
+						We begin with a clear picture of where you are now: your swim, bike and run
+						fitness, your training history, your schedule and the event you're working
+						towards. From there we build one connected plan that develops each discipline
+						in the right proportion — and teaches you how to back one effort up with another.
+					</p>
+					<p>
+						Brick sessions, transition practice, pacing and race nutrition are part of the
+						week, not an afterthought. You'll learn when to push, when to hold back and how
+						to arrive at the finish line with something left. From a first sprint triathlon
+						to a targeted long-distance build, the plan is yours.
+					</p>
+				</div>
+				<aside class="feature-list">
+					<p class="list-title">What your plan includes</p>
+					<ul>
+						{triathlonFocus.map((item) => (
+							<li><span class="check-mark" aria-hidden="true">✓</span><span>{item}</span></li>
+						))}
+					</ul>
+					<p class="feature-note">
+						Plans flex around work, travel and recovery. Progress is reviewed regularly,
+						so the training keeps working for you.
+					</p>
+				</aside>
+			</div>
+
+			<a
+				class="button-primary feature-cta"
+				href={whatsappHref(triathlonMessage)}
+				target="_blank"
+				rel="noopener noreferrer"
+			>Ask about triathlon coaching <span aria-hidden="true">↗</span></a>
+		</div>
+	</section>
+
+	<section class="discipline-section" id="disciplines" aria-labelledby="disciplines-title">
+		<div class="discipline-inner">
+			<div class="section-heading">
+				<div>
+					<p class="eyebrow">Single-sport coaching</p>
+					<h2 id="disciplines-title">Pick one. <span>Go further.</span></h2>
+				</div>
+				<p>
+					Not every athlete is chasing a triathlon finish line. If you want to get faster,
+					smoother or more confident in one discipline, we build a standalone plan around
+					just that.
+				</p>
+			</div>
+
+			<div class="discipline-grid">
+				{disciplines.map((discipline) => (
+					<article class="discipline-card">
+						<div class="discipline-card-top">
+							<span class="discipline-card-emoji" aria-hidden="true">{discipline.emoji}</span>
+							<p class="discipline-level">{discipline.level}</p>
+						</div>
+						<h3>{discipline.name}</h3>
+						<p class="discipline-tagline">{discipline.tagline}</p>
+						<p class="discipline-desc">{discipline.description}</p>
+						<p class="discipline-list-title">{discipline.focusLabel}</p>
+						<ul>
+							{discipline.focus.map((item) => (
+								<li><span class="check-mark" aria-hidden="true">✓</span><span>{item}</span></li>
+							))}
+						</ul>
+						<p class="discipline-for"><strong>For:</strong> {discipline.for}</p>
+						<a
+							class="discipline-link"
+							href={whatsappHref(disciplineMessage(discipline.name))}
+							target="_blank"
+							rel="noopener noreferrer"
+						>Ask about {discipline.name.toLowerCase()} coaching <span aria-hidden="true">↗</span></a>
+					</article>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<section class="coaching-strip" aria-label="Coaching approach">
+		<div><span>01 / ASSESS</span><strong>Start with your baseline</strong></div>
+		<div><span>02 / PLAN</span><strong>Train with clear purpose</strong></div>
+		<div><span>03 / PROGRESS</span><strong>Review, adapt, ride stronger</strong></div>
+	</section>
+</Layout>
+
+<style>
+	.coaching-hero { width: 100%; background: #090d10; }
+	.coaching-banner { position: relative; height: var(--hero-band-min); overflow: hidden; }
+	.coaching-banner::after {
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		background: linear-gradient(90deg, rgba(9, 13, 16, 0.82), rgba(9, 13, 16, 0.45) 45%, transparent 80%);
+		content: '';
+		pointer-events: none;
+	}
+	.coaching-banner img {
+		position: relative;
+		z-index: 1;
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: center center;
+	}
+	.coaching-banner-copy {
+		position: absolute;
+		z-index: 3;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		width: min(760px, 100%);
+		padding: 3.5rem 1.4rem 2.5rem;
+	}
+	.coaching-banner-copy .eyebrow { margin: 0; }
+	.coaching-banner-copy .display-heading {
+		margin: 1rem 0 0;
+		font-size: clamp(2.4rem, 5.2vw, 5.6rem);
+	}
+	.coaching-banner-copy .lead { margin: 1.2rem 0 0; }
+	.coaching-disciplines {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		margin: 0.4rem 0 0;
+		transform: translateY(-0.5rem);
+	}
+	.discipline-icon {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 2.942rem;
+		height: 3.11rem;
+		color: var(--ink);
+	}
+	.shield-shape {
+		position: absolute;
+		inset: 0;
+		background: var(--signal);
+		-webkit-mask: var(--shield-mask) center / contain no-repeat;
+		mask: var(--shield-mask) center / contain no-repeat;
+		filter: drop-shadow(0 0 6px rgba(0, 255, 17, 0.35));
+	}
+	.discipline-emoji {
+		position: relative;
+		z-index: 1;
+		font-size: 1.2625rem;
+		line-height: 1;
+		transform: translateY(2px);
+	}
+	.coaching-disciplines .pipe { color: var(--paper); font-size: 0.85rem; }
+	.coaching-copy-section { max-width: 1440px; margin: 0 auto; padding: 3.25rem clamp(1.25rem, 10vw, 10rem); border-top: 1px solid var(--line); background: var(--panel); }
+	.coaching-copy { max-width: 760px; }
+	.coaching-copy .lead { margin: 0; }
+	.coaching-cta { display: inline-flex; margin-top: 1.5rem; }
+
+	.coaching-feature { padding: 4rem clamp(1.25rem, 7vw, 7rem); border-top: 1px solid var(--line); background: rgba(8, 12, 15, 0.96); }
+	.feature-inner, .discipline-inner { max-width: 1440px; margin: 0 auto; }
+	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin: 0 0 2rem; }
+	.section-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.section-heading h2 span { color: var(--signal); }
+	.section-heading > p { max-width: 380px; margin: 0; color: #cfdddf; font-size: 0.8rem; line-height: 1.7; }
+	.feature-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr); gap: clamp(1.5rem, 4vw, 4rem); padding: 2rem; border: 1px solid var(--line); background: rgba(9, 14, 17, 0.94); }
+	.feature-copy p { margin: 0 0 1rem; color: #cfdddf; font-size: 0.82rem; line-height: 1.85; }
+	.feature-copy p:last-child { margin-bottom: 0; }
+	.feature-list { padding-left: clamp(1rem, 3vw, 2rem); border-left: 1px solid var(--line); }
+	.list-title { margin: 0 0 0.9rem; color: var(--signal); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+	.feature-list ul, .discipline-card ul { display: grid; gap: 0.55rem; margin: 0; padding: 0; list-style: none; }
+	.feature-list li, .discipline-card li { display: flex; align-items: flex-start; gap: 0.5rem; color: #d4e0e2; font-size: 0.75rem; line-height: 1.55; }
+	.check-mark { flex: none; color: var(--signal); }
+	.feature-note { margin: 1.1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.7rem; line-height: 1.7; }
+	.feature-cta { display: inline-flex; margin-top: 1.5rem; }
+
+	.discipline-section { padding: 4rem clamp(1.25rem, 7vw, 7rem) 4.5rem; border-top: 1px solid var(--line); }
+	.discipline-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+	.discipline-card { display: flex; flex-direction: column; padding: 1.75rem; border: 1px solid var(--line); background: rgba(9, 14, 17, 0.94); }
+	.discipline-card-top { display: flex; align-items: center; gap: 0.75rem; }
+	.discipline-card-emoji { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border: 1px solid rgba(131,229,220,0.35); background: rgba(131,229,220,0.06); font-size: 1.15rem; line-height: 1; }
+	.discipline-level { margin: 0; color: var(--signal); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+	.discipline-card h3 { margin: 1.2rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: 2.1rem; line-height: 1; text-transform: uppercase; }
+	.discipline-tagline { margin: 0.35rem 0 0; color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+	.discipline-desc { margin: 0.9rem 0 0; color: #cfdddf; font-size: 0.78rem; line-height: 1.8; }
+	.discipline-list-title { margin: 1.2rem 0 0.7rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+	.discipline-for { margin: 1rem 0 0; color: var(--muted); font-size: 0.7rem; line-height: 1.7; }
+	.discipline-for strong { color: var(--paper); }
+	.discipline-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: auto; padding-top: 1.2rem; color: var(--signal); font-size: 0.7rem; font-weight: 700; text-decoration: none; }
+	.discipline-link:hover, .discipline-link:focus-visible { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
+
+	.coaching-strip {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1rem;
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: 2.25rem clamp(1.25rem, 10vw, 10rem);
+		border-top: 1px solid var(--line);
+		background: rgba(12, 17, 20, 0.94);
+	}
+	.coaching-strip div { display: grid; gap: 0.45rem; }
+	.coaching-strip span { color: var(--signal); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; }
+	.coaching-strip strong {
+		font-family: 'Barlow Condensed', sans-serif;
+		font-size: 1.35rem;
+		font-weight: 600;
+		line-height: 1.1;
+		text-transform: uppercase;
+	}
+	@media (max-width: 1000px) {
+		.feature-body { grid-template-columns: 1fr; }
+		.feature-list { padding: 1.5rem 0 0; border-top: 1px solid var(--line); border-left: 0; }
+		.discipline-grid { grid-template-columns: 1fr; }
+	}
+	@media (min-width: 761px) {
+		.coaching-banner-copy { padding: 5rem clamp(1.25rem, 10vw, 10rem) 3rem; }
+	}
+	@media (max-width: 760px) {
+		.coaching-banner img { object-position: 80% center; }
+		.coaching-copy-section { padding: 2.5rem 1.4rem; }
+		.coaching-feature, .discipline-section { padding: 2.5rem 1.4rem; }
+		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
+		.feature-body { padding: 1.4rem; }
+		.coaching-strip { grid-template-columns: 1fr; gap: 1.3rem; }
+	}
+</style>

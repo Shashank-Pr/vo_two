@@ -8,6 +8,9 @@
 /** WhatsApp number in international format, digits only (no "+", spaces or leading zeros). */
 export const whatsappNumber = '919370343713'; // TODO: real WhatsApp number
 
+/** Public website URL used in shared posts. */
+export const websiteUrl = 'https://www.vo2bikes.com/';
+
 /** Instagram page URL. */
 export const instagramUrl = 'https://www.instagram.com/vo2bikes/'; // TODO: real Instagram page
 
