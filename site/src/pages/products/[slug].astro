@@ -38,30 +38,50 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	<section class="product-layout">
 		<section class="product-gallery" aria-label={`${bike.name} photos`}>
 			<figure class="gallery-canvas">
-				<img
-					src={urlFor(gallery[0]).width(1200).url()}
-					alt={`${bike.name}, primary product view`}
-					fetchpriority="high"
-				/>
-				<div class="magnifier" aria-hidden="true"></div>
+				<button class="gallery-open" type="button" aria-label={`View ${bike.name} photos full screen`}>
+					<img
+						src={urlFor(gallery[0]).width(1200).url()}
+						alt={`${bike.name}, primary product view`}
+						fetchpriority="high"
+					/>
+				</button>
 				<figcaption class="gallery-count">01 / {String(gallery.length).padStart(2, '0')}</figcaption>
-				<button class="gallery-share" type="button" data-share-url={`${base}products/${bike.slug}/`} aria-label={`Copy link for ${bike.name}`}>
+				<div class="gallery-actions">
+				<button
+					class="gallery-share"
+					type="button"
+					data-share-url={`${base}products/${bike.slug}/`}
+					data-share-name={bike.name}
+					data-share-year={bike.year}
+					data-share-score={bike.score}
+					data-share-price={bike.priceLabel}
+					data-share-new-price={bike.newBikePriceLabel ?? ''}
+					data-share-context="buy"
+					data-share-image={urlFor(bike.image).width(900).url()}
+					data-share-images={gallery.slice(0, 3).map((image) => urlFor(image).width(1200).url()).join(',')}
+					data-share-specs={specs.map((spec) => `${spec.label}: ${spec.value}`).join(' | ')}
+					aria-label={`Share ${bike.name}`}
+				>
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
 				</button>
+				</div>
 			</figure>
 			<div class="gallery-thumbs" aria-label={`${bike.name} photo thumbnails`}>
 				{gallery.map((image, index) => (
-					<button
-						type="button"
-						class:list={['thumb', { 'is-active': index === 0 }]}
-						aria-label={`Show ${bike.name} photo ${index + 1}`}
-						aria-current={index === 0 ? 'true' : undefined}
-						data-index={index}
-						data-src={urlFor(image).width(1200).url()}
-						data-zoom={urlFor(image).width(2400).url()}
-					>
-						<img src={urlFor(image).width(180).url()} alt="" loading="lazy" />
-					</button>
+					<div class="thumb-item">
+						<button
+							type="button"
+							class:list={['thumb', { 'is-active': index === 0 }]}
+							aria-label={`Show ${bike.name} photo ${index + 1}`}
+							aria-current={index === 0 ? 'true' : undefined}
+							data-index={index}
+							data-src={urlFor(image).width(1200).url()}
+							data-zoom={urlFor(image).width(2400).url()}
+							data-alt={`${bike.name} photo ${index + 1}`}
+						>
+							<img src={urlFor(image).width(180).url()} alt="" loading="lazy" />
+						</button>
+					</div>
 				))}
 			</div>
 		</section>
@@ -90,6 +110,14 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 		</aside>
 	</section>
 
+	<dialog class="lightbox" aria-label={`${bike.name} photos, full screen`}>
+		<button class="lightbox-close" type="button" aria-label="Close full screen photo">×</button>
+		<button class="lightbox-nav lightbox-prev" type="button" aria-label="Previous photo">‹</button>
+		<img class="lightbox-image" src="" alt="" />
+		<button class="lightbox-nav lightbox-next" type="button" aria-label="Next photo">›</button>
+		<p class="lightbox-count" aria-live="polite">01 / 01</p>
+	</dialog>
+
 	<script is:inline>
 		// Rentals reuse this prerendered page via ?mode=rent, so the URL query is
 		// the only place the rental context exists. Runs inline (synchronously)
@@ -104,50 +132,16 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			// Rentals are quoted per booking, so the price line is hidden entirely.
 			const line = document.querySelector('[data-price-line]');
 			if (line) line.hidden = true;
+
+			// Keep the shared link and template in rental context too.
+			const share = document.querySelector('[data-share-url]');
+			if (share) {
+				share.dataset.shareContext = 'rent';
+				share.dataset.sharePrice = '';
+				if (!share.dataset.shareUrl?.includes('?')) share.dataset.shareUrl += '?mode=rent';
+			}
 		})();
 	</script>
-	<script is:inline>
-		const shareToast = document.querySelector('.share-toast');
-		let shareToastTimer;
-		function showShareToast() {
-			if (!shareToast) return;
-			shareToast.classList.add('is-visible');
-			window.clearTimeout(shareToastTimer);
-			shareToastTimer = window.setTimeout(() => shareToast.classList.remove('is-visible'), 2200);
-		}
-
-		document.querySelectorAll('.share-btn[data-share-url], .gallery-share[data-share-url]').forEach((btn) => {
-			btn.addEventListener('click', async () => {
-				const url = new URL(btn.dataset.shareUrl || '', window.location.origin).href;
-				const label = btn.querySelector('.share-btn-text');
-				const originalAriaLabel = btn.getAttribute('aria-label');
-				try {
-					await navigator.clipboard.writeText(url);
-				} catch {
-					const input = document.createElement('input');
-					input.value = url;
-					document.body.appendChild(input);
-					input.select();
-					document.execCommand('copy');
-					input.remove();
-				}
-				btn.classList.add('is-copied');
-				showShareToast();
-				if (label) {
-					const original = label.textContent;
-					label.textContent = 'Copied!';
-					setTimeout(() => { label.textContent = original; btn.classList.remove('is-copied'); }, 1600);
-				} else {
-					btn.setAttribute('aria-label', 'Link copied');
-					setTimeout(() => {
-						if (originalAriaLabel) btn.setAttribute('aria-label', originalAriaLabel);
-						btn.classList.remove('is-copied');
-					}, 1600);
-				}
-			});
-		});
-	</script>
-
 	{specs.length > 0 && (
 		<section class="spec-section" aria-labelledby="spec-title">
 			<div class="section-heading"><div><h2 id="spec-title">The <span>spec.</span></h2></div></div>
@@ -177,17 +171,21 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 		const gallery = document.querySelector('.product-gallery');
 		if (gallery) {
 			const canvas = gallery.querySelector('.gallery-canvas');
-			const lens = gallery.querySelector('.magnifier');
-			const mainImage = canvas && canvas.querySelector('img');
+			const openButton = gallery.querySelector('.gallery-open');
+			const mainImage = openButton?.querySelector('img');
 			const countEl = gallery.querySelector('.gallery-count');
-			const thumbs = [...gallery.querySelectorAll('.thumb')];
-			const ZOOM = 2;
+			const thumbs = [...gallery.querySelectorAll<HTMLElement>('.thumb')];
+			const lightbox = document.querySelector('.lightbox');
+			const lightboxImage = lightbox?.querySelector('.lightbox-image');
+			const lightboxCount = lightbox?.querySelector('.lightbox-count');
+			let activeIndex = 0;
+			let didSwipe = false;
 
 			const pad = (n) => String(n).padStart(2, '0');
 
 			/* Keep the active thumbnail visible in the strip below the canvas. */
 			const reveal = (thumb) => {
-				const strip = thumb.parentElement;
+				const strip = thumb.closest('.gallery-thumbs');
 				if (!strip) return;
 				const stripRect = strip.getBoundingClientRect();
 				const thumbRect = thumb.getBoundingClientRect();
@@ -206,44 +204,69 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 					if (active) t.setAttribute('aria-current', 'true');
 					else t.removeAttribute('aria-current');
 				});
-				mainImage.src = thumb.dataset.src;
-				lens.style.backgroundImage = `url('${thumb.dataset.zoom}')`;
-				countEl.textContent = `${pad(Number(thumb.dataset.index) + 1)} / ${pad(thumbs.length)}`;
+				if (mainImage) mainImage.src = thumb.dataset.src;
+				if (countEl) countEl.textContent = `${pad(Number(thumb.dataset.index) + 1)} / ${pad(thumbs.length)}`;
+				activeIndex = Number(thumb.dataset.index) || 0;
 				reveal(thumb);
 			};
 
-			const lensHalf = Math.round(lens.offsetWidth / 2);
-
-			/* The canvas is a fixed 4:3 block and the photo is contained inside it,
-			   so the visible image is letterboxed on two sides. Mirror that
-			   geometry here: the lens must track the photo, not the empty box. */
-			const setLens = (clientX, clientY) => {
-				const rect = canvas.getBoundingClientRect();
-				const naturalWidth = mainImage.naturalWidth || rect.width;
-				const naturalHeight = mainImage.naturalHeight || rect.height;
-				const scale = Math.min(rect.width / naturalWidth, rect.height / naturalHeight);
-				const shownWidth = naturalWidth * scale;
-				const shownHeight = naturalHeight * scale;
-				const offsetX = (rect.width - shownWidth) / 2;
-				const offsetY = (rect.height - shownHeight) / 2;
-
-				const x = Math.min(Math.max(clientX - rect.left - offsetX, 0), shownWidth);
-				const y = Math.min(Math.max(clientY - rect.top - offsetY, 0), shownHeight);
-
-				lens.style.left = `${x + offsetX}px`;
-				lens.style.top = `${y + offsetY}px`;
-				lens.style.backgroundSize = `${shownWidth * ZOOM}px ${shownHeight * ZOOM}px`;
-				lens.style.backgroundPosition = `${-(x * ZOOM) + lensHalf}px ${-(y * ZOOM) + lensHalf}px`;
+			const setLightboxImage = (index) => {
+				const thumb = thumbs[index];
+				if (!thumb) return;
+				activeIndex = index;
+				const src = thumb.dataset.zoom || thumb.dataset.src || '';
+				if (lightboxImage) {
+					lightboxImage.src = src;
+					lightboxImage.alt = thumb.dataset.alt || '';
+				}
+				if (lightboxCount) lightboxCount.textContent = `${pad(index + 1)} / ${pad(thumbs.length)}`;
 			};
 
-			const onMove = (event) => {
-				if (!lens.classList.contains('is-on')) return;
-				setLens(event.clientX, event.clientY);
+			const openLightbox = (index = activeIndex) => {
+				if (!lightbox) return;
+				setLightboxImage(index);
+				if (!lightbox.open) {
+					if (typeof lightbox.showModal === 'function') lightbox.showModal();
+					else lightbox.setAttribute('open', '');
+					document.body.classList.add('has-lightbox');
+				}
 			};
 
+			const stepLightbox = (delta) => {
+				if (!thumbs.length) return;
+				setLightboxImage((activeIndex + delta + thumbs.length) % thumbs.length);
+			};
+
+			openButton?.addEventListener('click', () => {
+				if (didSwipe) {
+					didSwipe = false;
+					return;
+				}
+				openLightbox();
+			});
+
+			/* Thumbnails only change the displayed image; the large image opens full screen. */
 			thumbs.forEach((thumb) => {
 				thumb.addEventListener('mouseenter', () => activate(thumb));
 				thumb.addEventListener('click', () => activate(thumb));
+			});
+
+			lightbox?.querySelector('.lightbox-close')?.addEventListener('click', () => lightbox.close?.());
+			lightbox?.querySelector('.lightbox-prev')?.addEventListener('click', () => stepLightbox(-1));
+			lightbox?.querySelector('.lightbox-next')?.addEventListener('click', () => stepLightbox(1));
+			lightbox?.addEventListener('click', (event) => {
+				if (event.target === lightbox) lightbox.close?.();
+			});
+			lightbox?.addEventListener('close', () => document.body.classList.remove('has-lightbox'));
+			lightbox?.addEventListener('keydown', (event) => {
+				if (event.key === 'ArrowLeft') {
+					event.preventDefault();
+					stepLightbox(-1);
+				}
+				if (event.key === 'ArrowRight') {
+					event.preventDefault();
+					stepLightbox(1);
+				}
 			});
 
 			/* Touch: a horizontal swipe on the main photo steps to the next or
@@ -272,6 +295,8 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 					swipeStart = null;
 					if (Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy)) return;
 
+					didSwipe = true;
+					window.setTimeout(() => { didSwipe = false; }, 350);
 					const current = thumbs.findIndex((thumb) => thumb.classList.contains('is-active'));
 					const next = thumbs[dx < 0 ? current + 1 : current - 1];
 					if (next) activate(next);
@@ -279,23 +304,33 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 				{ passive: true },
 			);
 
-			canvas.addEventListener('mouseenter', (event) => {
-				lens.classList.add('is-on');
-				canvas.classList.add('is-magnifying');
-				onMove(event);
-			});
-			canvas.addEventListener('mousemove', onMove);
-			canvas.addEventListener('mouseleave', () => {
-				lens.classList.remove('is-on');
-				canvas.classList.remove('is-magnifying');
-			});
+			let lightboxSwipeStart = null;
+			lightbox?.addEventListener(
+				'touchstart',
+				(event) => {
+					lightboxSwipeStart =
+						event.touches.length === 1
+							? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+							: null;
+				},
+				{ passive: true },
+			);
+			lightbox?.addEventListener(
+				'touchend',
+				(event) => {
+					if (!lightboxSwipeStart) return;
+					const touch = event.changedTouches[0];
+					const dx = touch.clientX - lightboxSwipeStart.x;
+					const dy = touch.clientY - lightboxSwipeStart.y;
+					lightboxSwipeStart = null;
+					if (Math.abs(dx) >= 45 && Math.abs(dx) > Math.abs(dy)) stepLightbox(dx < 0 ? 1 : -1);
+				},
+				{ passive: true },
+			);
 
-			activate(thumbs[0]);
+			if (thumbs[0]) activate(thumbs[0]);
 		}
 	</script>
-	<div class="share-toast" role="status" aria-live="polite" aria-atomic="true">
-		<span aria-hidden="true">✓</span> Link copied to clipboard
-	</div>
 </Layout>
 
 <style>
@@ -309,22 +344,34 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	   mixed portrait/landscape sets still line up. */
 	.gallery-thumbs { display: flex; gap: 0.6rem; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: none; }
 	.gallery-thumbs::-webkit-scrollbar { display: none; }
-	.thumb { display: block; flex: 0 0 auto; width: 92px; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
+	.thumb-item { position: relative; flex: 0 0 auto; width: 92px; }
+	.thumb { display: block; width: 100%; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
 	.thumb:hover { border-color: var(--muted); }
 	.thumb.is-active, .thumb:focus-visible { outline: none; border-color: var(--signal); }
 	.thumb:not(.is-active) { opacity: 0.78; }
 	.thumb:not(.is-active):hover { opacity: 1; }
 	.thumb img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white; }
-	.gallery-canvas { position: relative; margin: 0; overflow: hidden; background: #151d20; aspect-ratio: 4 / 3; cursor: crosshair; }
-	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white}
-	.gallery-canvas.is-magnifying { cursor: none; }
-	.gallery-share { position: absolute; z-index: 3; top: 0.75rem; right: 0.75rem; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.86); color: var(--paper); cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.gallery-canvas { position: relative; margin: 0; overflow: hidden; background: #151d20; aspect-ratio: 4 / 3; cursor: zoom-in; }
+	.gallery-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: inherit; }
+	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white; }
+	.gallery-actions { position: absolute; z-index: 3; top: 0.75rem; right: 0.75rem; display: flex; gap: 0.35rem; }
+	.gallery-share { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.86); color: var(--paper); cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
 	.gallery-share:hover, .gallery-share:focus-visible { color: var(--signal); border-color: var(--signal); background: rgba(7, 13, 15, 0.96); outline: none; }
 	.gallery-share.is-copied { color: var(--signal); border-color: var(--signal); }
-	.magnifier { position: absolute; left: 0; top: 0; width: clamp(120px, 24vw, 190px); aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(241, 247, 248, 0.95); box-shadow: 0 0 0 1px rgba(9, 13, 16, 0.7), 0 6px 24px rgba(0, 0, 0, 0.55); background-repeat: no-repeat; pointer-events: none; opacity: 0; transform: translate(-50%, -50%); transition: opacity 120ms ease; z-index: 2; }
-	.magnifier.is-on { opacity: 1; }
 	.product-gallery figcaption { position: absolute; right: 0.7rem; bottom: 0.7rem; padding: 0.4rem 0.5rem; background: rgba(7, 13, 15, 0.8); color: var(--paper); font-size: 0.6rem; z-index: 3; }
 	.product-gallery figcaption span { color: var(--signal); }
+	:global(body.has-lightbox) { overflow: hidden; }
+	.lightbox { box-sizing: border-box; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: clamp(3.5rem, 6vw, 5rem) clamp(3.5rem, 8vw, 7rem); border: 0; background: rgba(5, 8, 10, 0.98); color: var(--paper); overflow: hidden; }
+	:global(dialog.lightbox::backdrop) { background: rgba(5, 8, 10, 0.98); }
+	.lightbox[open] { display: grid; place-items: center; }
+	.lightbox-image { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: contain; }
+	.lightbox-close, .lightbox-nav { position: fixed; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.9); color: var(--paper); font-size: 1.6rem; line-height: 1; cursor: pointer; }
+	.lightbox-close:hover, .lightbox-nav:hover, .lightbox-close:focus-visible, .lightbox-nav:focus-visible { color: var(--signal); border-color: var(--signal); outline: none; }
+	.lightbox-close { top: 1rem; right: 1rem; font-size: 2rem; }
+	.lightbox-nav { top: 50%; transform: translateY(-50%); }
+	.lightbox-prev { left: 1rem; }
+	.lightbox-next { right: 1rem; }
+	.lightbox-count { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); margin: 0; color: var(--muted); font-size: 0.7rem; letter-spacing: 0.08em; }
 	.product-summary { position: sticky; top: 1rem; padding: 1.2rem 0; }
 	.product-summary .eyebrow { flex-wrap: wrap; font-size: 0.59rem; }
 	.product-summary .display-heading { margin: 1.2rem 0 0.4rem; font-size: clamp(2.4rem, 5vw, 5.3rem); }
@@ -346,9 +393,6 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.share-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; width: 100%; margin-top: 0.75rem; padding: 0.8rem 1rem; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--paper); font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
 	.share-btn:hover, .share-btn:focus-visible { border-color: rgba(131,229,220,0.5); background: rgba(131,229,220,0.08); outline: none; }
 	.share-btn.is-copied { color: var(--signal); border-color: rgba(131,229,220,0.5); }
-	.share-toast { position: fixed; z-index: 50; right: 1.25rem; bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border: 1px solid var(--signal); background: rgba(8, 12, 15, 0.96); color: var(--paper); font-size: 0.72rem; font-weight: 700; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; pointer-events: none; }
-	.share-toast span { color: var(--signal); }
-	.share-toast.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
 	.inspection-link { display: block; margin-top: 1rem; color: var(--paper); font-size: 0.7rem; text-align: center; text-decoration-color: var(--signal); text-underline-offset: 4px; }
 	.inspection-link span { margin-left: 0.35rem; color: var(--signal); }
 	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); border-top: 1px solid var(--line) }
@@ -377,11 +421,17 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.report-note { max-width: 1200px; margin: 1.4rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
 	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; } .product-summary { position: static; } }
 	@media (max-width: 600px) {
-		.thumb { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
+		.thumb-item { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
 		.product-layout { padding-right: 1rem; padding-left: 1rem; }
 		.spec-list { grid-template-columns: 1fr; }
 		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
-		.share-toast { right: 1rem; bottom: 1rem; left: 1rem; justify-content: center; }
-		.gallery-share { top: 0.5rem; right: 0.5rem; width: 30px; height: 30px; }
+		.gallery-actions { top: 0.5rem; right: 0.5rem; gap: 0.25rem; }
+		.gallery-share { width: 30px; height: 30px; }
+		.lightbox { padding: 3.5rem 0.75rem 4.5rem; }
+		.lightbox-close { top: 0.75rem; right: 0.75rem; }
+		.lightbox-nav { top: auto; bottom: 0.75rem; transform: none; }
+		.lightbox-prev { left: 0.75rem; }
+		.lightbox-next { right: 0.75rem; }
+		.lightbox-count { bottom: 1.7rem; }
 	}
 </style>

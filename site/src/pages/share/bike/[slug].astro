@@ -1,0 +1,177 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import SocialLinks from '../../../components/SocialLinks.astro';
+import { getBicycles, urlFor } from '../../../data/bicycles';
+import { base } from 'astro:config/client';
+
+export async function getStaticPaths() {
+	const bicycles = await getBicycles();
+	return bicycles.map((bike) => ({
+		params: { slug: bike.slug },
+		props: { bike },
+	}));
+}
+
+// Always read the latest Sanity record; getStaticPaths only supplies stable URLs.
+const { slug } = Astro.params;
+const bicycles = await getBicycles();
+const bike = bicycles.find((candidate) => candidate.slug === slug) ?? Astro.props.bike;
+const gallery = [bike.image, ...bike.gallery];
+const specs = bike.specList ?? [];
+
+// Shared posts link to this bike's page in the sharing workspace.
+const shareBikeUrl = `${base}share/bike/${bike.slug}/`;
+const shareImages = gallery.slice(0, 3).map((image) => urlFor(image).width(1200).url()).join(',');
+const shareSpecs = specs.map((spec) => `${spec.label}: ${spec.value}`).join(' | ');
+---
+
+<Layout
+	title={`${bike.name} | Sharing workspace`}
+	description="Private sharing view for VO2 Bikes inventory."
+	socialShare
+	noindex
+	shareOnly
+>
+	<div class="share-detail">
+		<div class="share-topbar">
+			<a class="share-back" href={`${base}share/`}>← Back to inventory</a>
+			<span class="share-private">Private sharing workspace</span>
+			<SocialLinks compact />
+		</div>
+
+		<div class="share-detail-grid">
+			<section class="share-gallery" aria-label={`${bike.name} photos`}>
+				<figure class="share-canvas">
+					<img src={urlFor(gallery[0]).width(1200).url()} alt={bike.alt} fetchpriority="high" />
+					<div class="share-photo-actions">
+						<button
+							class="share-photo-download"
+							type="button"
+							data-download-url={urlFor(gallery[0]).width(1600).url()}
+							data-download-name={`${bike.name} photo 1`}
+							aria-label={`Download ${bike.name} photo 1`}
+						>
+							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 21h16"></path></svg>
+						</button>
+						<button
+							class="share-photo-share"
+							type="button"
+							data-share-url={shareBikeUrl}
+							data-share-name={bike.name}
+							data-share-year={bike.year}
+							data-share-score={bike.score}
+							data-share-price={bike.priceLabel}
+							data-share-new-price={bike.newBikePriceLabel ?? ''}
+							data-share-context="buy"
+							data-share-image={urlFor(bike.image).width(900).url()}
+							data-share-images={shareImages}
+							data-share-specs={shareSpecs}
+							aria-label={`Share ${bike.name}`}
+						>
+							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+						</button>
+					</div>
+				</figure>
+				<div class="share-thumbs" aria-label="All photos">
+					{gallery.map((image, index) => (
+						<div class="share-thumb">
+							<img src={urlFor(image).width(180).url()} alt="" loading="lazy" />
+							<button
+								class="share-thumb-download"
+								type="button"
+								data-download-url={urlFor(image).width(1600).url()}
+								data-download-name={`${bike.name} photo ${index + 1}`}
+								aria-label={`Download ${bike.name} photo ${index + 1}`}
+							>↓</button>
+						</div>
+					))}
+				</div>
+			</section>
+
+			<aside class="share-summary">
+				<p class="eyebrow">{bike.year} / verified bike</p>
+				<h1 class="display-heading">{bike.name}</h1>
+				<p class="share-price" data-price-line>
+					{bike.newBikePriceLabel && <s>{bike.newBikePriceLabel}</s>}
+					<strong>{bike.priceLabel}</strong>
+				</p>
+				<p class="share-score">Inspection score <strong>{bike.score}/100</strong></p>
+				{bike.description && <p class="share-description">{bike.description}</p>}
+				{specs.length > 0 && (
+					<ul class="share-specs">
+						{specs.map((spec) => <li><span>{spec.label}</span><strong>{spec.value}</strong></li>)}
+					</ul>
+				)}
+				<button
+					class="share-main-button"
+					type="button"
+					data-share-url={shareBikeUrl}
+					data-share-name={bike.name}
+					data-share-year={bike.year}
+					data-share-score={bike.score}
+					data-share-price={bike.priceLabel}
+					data-share-new-price={bike.newBikePriceLabel ?? ''}
+					data-share-context="buy"
+					data-share-image={urlFor(bike.image).width(900).url()}
+					data-share-images={shareImages}
+					data-share-specs={shareSpecs}
+				>Share on social media <span aria-hidden="true">↗</span></button>
+			</aside>
+		</div>
+	</div>
+
+	<script is:inline>
+		// The rental tab opens this same static page with ?mode=rent.
+		(() => {
+			if (new URLSearchParams(location.search).get('mode') !== 'rent') return;
+			document.querySelectorAll('[data-share-context]').forEach((button) => {
+				button.setAttribute('data-share-context', 'rent');
+				button.setAttribute('data-share-price', '');
+				button.setAttribute('data-share-new-price', '');
+			});
+			const priceLine = document.querySelector('[data-price-line]');
+			if (priceLine) priceLine.hidden = true;
+			const back = document.querySelector('.share-back');
+			if (back) back.setAttribute('href', `${document.body.dataset.base || '/'}share/rent/`);
+		})();
+	</script>
+</Layout>
+
+<style>
+	.share-detail { max-width: 1280px; margin: 0 auto; padding: 2rem clamp(1.25rem, 5vw, 4rem) 4rem; }
+	.share-topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+	.share-back { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.08em; text-decoration: none; text-transform: uppercase; }
+	.share-back:hover { color: var(--signal); }
+	.share-private { color: var(--signal); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; }
+	.share-detail-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: start; }
+	.share-gallery { display: grid; gap: 0.6rem; min-width: 0; }
+	.share-canvas { position: relative; margin: 0; padding: 0; border: 1px solid var(--line); background: #fff; aspect-ratio: 4 / 3; }
+	.share-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; }
+	.share-photo-actions { position: absolute; z-index: 2; top: 0.75rem; right: 0.75rem; display: flex; gap: 0.35rem; }
+	.share-photo-actions button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.9); color: var(--paper); cursor: pointer; }
+	.share-photo-actions button:hover, .share-photo-actions button:focus-visible { color: var(--signal); border-color: var(--signal); outline: none; }
+	.share-thumbs { display: flex; gap: 0.5rem; overflow-x: auto; scrollbar-width: none; }
+	.share-thumbs::-webkit-scrollbar { display: none; }
+	.share-thumb { position: relative; flex: 0 0 auto; width: 84px; border: 1px solid var(--line); background: #fff; aspect-ratio: 4 / 3; }
+	.share-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; }
+	.share-thumb-download { position: absolute; top: 0.2rem; right: 0.2rem; width: 20px; height: 20px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.9); color: var(--paper); font-size: 0.75rem; line-height: 1; cursor: pointer; }
+	.share-summary { display: grid; gap: 1rem; }
+	.share-summary .display-heading { margin: 0; }
+	.share-price { display: flex; align-items: baseline; gap: 0.6rem; margin: 0; }
+	.share-price s { color: var(--muted); }
+	.share-price strong { font-size: 1.5rem; color: var(--signal); }
+	.share-score { margin: 0; color: var(--muted); font-size: 0.8rem; }
+	.share-score strong { color: var(--paper); }
+	.share-description { margin: 0; color: #cfdddf; font-size: 0.85rem; line-height: 1.7; }
+	.share-specs { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+	.share-specs li { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line); font-size: 0.75rem; }
+	.share-specs span { color: var(--muted); }
+	.share-specs strong { text-align: right; }
+	.share-main-button { display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; width: 100%; padding: 0.95rem 1rem; border: 1px solid var(--signal); background: var(--signal); color: #071013; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+	.share-main-button:hover { background: transparent; color: var(--signal); }
+	@media (max-width: 820px) {
+		.share-detail-grid { grid-template-columns: 1fr; }
+		.share-detail { padding: 1.5rem 1rem 3rem; }
+		.share-private { display: none; }
+	}
+</style>

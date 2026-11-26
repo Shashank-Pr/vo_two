@@ -2,20 +2,32 @@
 		interface Props {
 			title?: string;
 			description?: string;
+			/** Enables the WhatsApp / Facebook / Instagram share options in the share sheet. */
+			socialShare?: boolean;
+			/** Keeps an unlisted page out of search-engine results. */
+			noindex?: boolean;
+			/** Removes all main-site chrome; used by the standalone sharing workspace. */
+			shareOnly?: boolean;
 		}
 
 		const {
 			title = 'VO2 Bikes | Verified Pre-owned Bikes',
 			description = 'Shop quality-checked pre-owned road and gravel bikes, each inspected and scored out of 100.',
+			socialShare = false,
+			noindex = false,
+			shareOnly = false,
 		} = Astro.props;
 		const currentPath = Astro.url.pathname;
+		/* On the unlisted sharing workspace, Buy/Rent tabs are separate static pages. */
+		const shareRent = socialShare && currentPath.startsWith(`${base}share/rent`);
 import { base } from 'astro:config/client';
 import Logo from '../assets/logo_combined_png.png';
+import SocialLinks from '../components/SocialLinks.astro';
 import backdrop from '../assets/logo3.webp';
 import instagramIcon from '../assets/insta.jpg';
 import facebookIcon from '../assets/facebook.svg';
 import whatsappIcon from '../assets/whatsapp.png';
-import { contactEmail, contactPhoneDisplay, callHref, facebookUrl, instagramUrl, whatsappHref } from '../data/contact';
+import { contactEmail, contactPhoneDisplay, callHref, facebookUrl, instagramUrl, websiteUrl, whatsappHref, whatsappNumber } from '../data/contact';
 
 const bg_url = backdrop.src;
 const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`; 
@@ -27,6 +39,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				<meta charset="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<meta name="description" content={description} />
+				{noindex && <meta name="robots" content="noindex, nofollow" />}
 				<meta name="theme-color" content="#090d10" />
 				<meta name="generator" content={Astro.generator} />
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,60 +48,83 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 				<!-- <style is:inline set:html={bodyBackground}></style> -->
 				<title>{title}</title>
 			</head>
-			<body>
+			<body data-social-share={socialShare ? 'true' : undefined} data-base={base}>
+				<script is:inline>
+					/* Bikes opened from /share/ keep the sharing workspace UI on their detail page. */
+					(() => {
+						if (new URLSearchParams(location.search).get('social') !== '1') return;
+						const shareBase = `${document.body.dataset.base || '/'}share/`;
+						document.body.dataset.socialShare = 'true';
+						document.querySelectorAll('.share-sheet [data-share-target]').forEach((button) => button.removeAttribute('hidden'));
+
+						/* The detail page is prerendered with the public nav; trim it back to Buy/Rent. */
+						const nav = document.querySelector('.primary-nav');
+						if (nav) {
+							nav.querySelectorAll(':scope > :not([data-nav])').forEach((item) => item.remove());
+							const buy = nav.querySelector('[data-nav="buy"]');
+							const rent = nav.querySelector('[data-nav="rent"]');
+							if (buy) buy.setAttribute('href', shareBase);
+							if (rent) rent.setAttribute('href', `${shareBase}rent/`);
+						}
+						document.querySelector('.header-contact')?.remove();
+						const wordmark = document.querySelector('.wordmark');
+						if (wordmark) wordmark.setAttribute('href', shareBase);
+						const crumb = document.querySelector('.breadcrumbs a');
+						if (crumb) crumb.setAttribute('href', shareBase);
+					})();
+				</script>
 				<div class="site-shell">
+					{!shareOnly && (
 					<header class="site-header">
 						<a class="wordmark" href={`${base}`} aria-label="vo2bikes home">
 							<img class="wordmark-mark" aria-hidden="true" src={`${Logo.src}`}>
 						</a>
 						<nav class="primary-nav" aria-label="Main navigation">
-							<a data-nav="buy" href={`${base}`} aria-current={currentPath === `${base}` || currentPath.startsWith(`${base}products/`) ? 'page' : undefined}>BUY BIKES</a>
-							<a href={`${base}sell/`} aria-current={currentPath.startsWith(`${base}sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
-							<a data-nav="rent" href={`${base}rent/`} aria-current={currentPath.startsWith(`${base}rent/`) ? 'page' : undefined}>RENT BIKES</a>
-							<a href={`${base}services/`} aria-current={currentPath.startsWith(`${base}services/`) ? 'page' : undefined}>SERVICES</a>
-							<a class="nav-wide" href={`${base}inspection/`} aria-current={currentPath.startsWith(`${base}inspection/`) ? 'page' : undefined}>INSPECTION</a>
-							<a class="nav-wide" href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>ABOUT</a>
-							<details class="nav-more" aria-current={currentPath.startsWith(`${base}inspection/`) || (currentPath.startsWith(`${base}about/`)) ? 'page' : undefined}>
-								<summary>More</summary>
-								<div class="nav-more-list">
-									<a href={`${base}inspection/`} aria-current={currentPath.startsWith(`${base}inspection/`) ? 'page' : undefined}>INSPECTION</a>
-									<!-- <a href={`${base}sell/`} aria-current={currentPath.startsWith(`${base}sell/`) ? 'page' : undefined}>Sell your bike</a> -->
-									<a href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>About</a>
+							{socialShare ? (
+								<>
+									<a data-nav="buy" href={`${base}share/`} aria-current={shareRent ? undefined : 'page'}>BUY BIKES</a>
+									<a data-nav="rent" href={`${base}share/rent/`} aria-current={shareRent ? 'page' : undefined}>RENT BIKES</a>
+								</>
+							) : (
+								<>
+									<a data-nav="buy" href={`${base}`} aria-current={currentPath === `${base}` || currentPath.startsWith(`${base}products/`) ? 'page' : undefined}>BUY BIKES</a>
+									<a href={`${base}sell/`} aria-current={currentPath.startsWith(`${base}sell/`) ? 'page' : undefined}>SELL YOUR BIKE</a>
+									<a href={`${base}coaching/`} aria-current={currentPath.startsWith(`${base}coaching/`) ? 'page' : undefined}>COACHING</a>
+									<a href={`${base}services/`} aria-current={currentPath.startsWith(`${base}services/`) ? 'page' : undefined}>SERVICES</a>
+									<a class="nav-wide" href={`${base}inspection/`} aria-current={currentPath.startsWith(`${base}inspection/`) ? 'page' : undefined}>INSPECTION</a>
+									<a class="nav-wide" href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>ABOUT</a>
+									<details class="nav-more" aria-current={currentPath.startsWith(`${base}inspection/`) || (currentPath.startsWith(`${base}about/`)) ? 'page' : undefined}>
+										<summary>More</summary>
+										<div class="nav-more-list">
+											<a href={`${base}inspection/`} aria-current={currentPath.startsWith(`${base}inspection/`) ? 'page' : undefined}>INSPECTION</a>
+											<!-- <a href={`${base}sell/`} aria-current={currentPath.startsWith(`${base}sell/`) ? 'page' : undefined}>Sell your bike</a> -->
+											<a href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>About</a>
+										</div>
+									</details>
+								</>
+							)}
+						</nav>
+						{!socialShare && (
+							<details class="header-contact">
+								<summary class="header-cta">Contact Us <span aria-hidden="true">↗</span></summary>
+								<div class="header-contact-list">
+									<a href={whatsappHref("Hi VO2 Bikes!")} target="_blank" rel="noopener noreferrer">
+										<span class="header-contact-label">WhatsApp</span>
+										<span class="header-contact-hint">Chat with us</span>
+									</a>
+									<a href={callHref}>
+										<span class="header-contact-label">Call</span>
+										<span class="header-contact-hint">{contactPhoneDisplay}</span>
+									</a>
 								</div>
 							</details>
-						</nav>
-						<script is:inline>
-							// Bike detail pages are prerendered, so the buy/rent context can
-							// only be read at runtime from the URL. Opening a bike from the
-							// rental fleet carries ?mode=rent, which moves the nav highlight
-							// from BUY BIKES to RENT BIKES.
-							(() => {
-								if (new URLSearchParams(location.search).get('mode') !== 'rent') return;
-								const nav = document.querySelector('.primary-nav');
-								const buy = nav?.querySelector('[data-nav="buy"]');
-								const rent = nav?.querySelector('[data-nav="rent"]');
-								if (!buy || !rent) return;
-								buy.removeAttribute('aria-current');
-								rent.setAttribute('aria-current', 'page');
-							})();
-						</script>
-						<details class="header-contact">
-							<summary class="header-cta">Contact Us <span aria-hidden="true">↗</span></summary>
-							<div class="header-contact-list">
-								<a href={whatsappHref("Hi VO2 Bikes!")} target="_blank" rel="noopener noreferrer">
-									<span class="header-contact-label">WhatsApp</span>
-									<span class="header-contact-hint">Chat with us</span>
-								</a>
-								<a href={callHref}>
-									<span class="header-contact-label">Call</span>
-									<span class="header-contact-hint">{contactPhoneDisplay}</span>
-								</a>
-							</div>
-						</details>
+						)}
 					</header>
+					)}
 					<main>
 						<slot />
 					</main>
+					{!shareOnly && (
 					<footer class="site-footer">
 						<a class="footer-wordmark" href={`${base}`}>VO<sub>2</sub> Bikes <span>/ RIDE. VERIFIED</span></a>
 						<p>Better bikes. Better backed.</p>
@@ -99,7 +135,321 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 							<a class="footer-social" href={whatsappHref("Hi VO2 Bikes! I have a question about one of your bikes.")} target="_blank" rel="noopener noreferrer" aria-label="Message vo2bikes on WhatsApp" title="WhatsApp"><img src={whatsappIcon.src} alt="" width="26" height="26" loading="lazy" /></a>
 						</div>
 					</footer>
+					)}
 				</div>
+				<div class="global-share-toast" role="status" aria-live="polite" aria-atomic="true">
+					<span class="share-toast-icon" aria-hidden="true">✓</span>
+					<span class="share-toast-message">Link copied to clipboard</span>
+				</div>
+				<dialog
+					class="share-sheet"
+					aria-labelledby="share-sheet-title"
+					data-whatsapp-number={whatsappNumber}
+					data-website-url={websiteUrl}
+					data-instagram-url={instagramUrl}
+					data-facebook-url={facebookUrl}
+				>
+					<button class="share-sheet-close" type="button" aria-label="Close sharing options">×</button>
+					<p class="eyebrow">Share this bike</p>
+					<h2 id="share-sheet-title">Ready to ride?</h2>
+					<div class="share-preview">
+						<img class="share-preview-image" src="" alt="" />
+						<div class="share-preview-details">
+							<strong class="share-preview-name"></strong>
+							<span class="share-preview-meta"></span>
+						</div>
+					</div>
+					<label class="share-template-label" for="share-template">Your ready-to-share post</label>
+					<textarea id="share-template" class="share-template" readonly rows="9"></textarea>
+					<p class="share-hint">Pick a destination below. On phones, Instagram uses the native share sheet so you can attach the bike photos.</p>
+					<div class="share-actions">
+						<button type="button" class="share-option" data-share-target="whatsapp" hidden={!socialShare}>WhatsApp</button>
+						<button type="button" class="share-option" data-share-target="facebook" hidden={!socialShare}>Facebook</button>
+						<button type="button" class="share-option" data-share-target="instagram" hidden={!socialShare}>Instagram</button>
+						<button type="button" class="share-option" data-share-target="copy" hidden={!socialShare}>Copy post</button>
+						<button type="button" class="share-option" data-share-target="link">Copy link</button>
+						{socialShare && (
+							<button type="button" class="share-option" data-download-url="" data-download-name="">Download photo</button>
+						)}
+					</div>
+					{socialShare && (
+						<div class="share-social">
+							<SocialLinks label="Find us online" compact />
+						</div>
+					)}
+				</dialog>
+				<script>
+					interface ShareBikeData {
+						url: string;
+						name: string;
+						year: string;
+						score: string;
+						price: string;
+						newPrice: string;
+						context: string;
+						image: string;
+						images: string[];
+						specs: string[];
+					}
+
+					const shareToast = document.querySelector<HTMLElement>('.global-share-toast');
+					const shareToastMessage = shareToast?.querySelector<HTMLElement>('.share-toast-message');
+					const shareSheet = document.querySelector<HTMLDialogElement>('.share-sheet');
+					let shareToastTimer: number | undefined;
+					let currentBike: ShareBikeData | null = null;
+
+					function showShareToast(message = 'Link copied to clipboard') {
+						if (!shareToast) return;
+						if (shareToastMessage) shareToastMessage.textContent = message;
+						shareToast.classList.add('is-visible');
+						window.clearTimeout(shareToastTimer);
+						shareToastTimer = window.setTimeout(() => shareToast.classList.remove('is-visible'), 2400);
+					}
+
+					async function copyText(text: string): Promise<boolean> {
+						try {
+							await navigator.clipboard.writeText(text);
+							return true;
+						} catch {
+							// Older browsers and some mobile contexts block the async clipboard.
+						}
+						try {
+							const input = document.createElement('textarea');
+							input.value = text;
+							input.setAttribute('readonly', '');
+							input.style.position = 'fixed';
+							input.style.opacity = '0';
+							document.body.appendChild(input);
+							input.select();
+							const copied = document.execCommand('copy');
+							input.remove();
+							return copied;
+						} catch {
+							return false;
+						}
+					}
+
+					function safeFilename(name: string): string {
+						return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'bike';
+					}
+
+					function downloadImage(btn: HTMLElement) {
+						const src = btn.dataset.downloadUrl;
+						if (!src) return;
+						const name = btn.dataset.downloadName || currentBike?.name || 'bike';
+						try {
+							/* Sanity's `dl` parameter sets Content-Disposition: attachment.
+							   Navigating there downloads without a CORS-restricted fetch. */
+							const url = new URL(src, window.location.origin);
+							const extension = url.pathname.split('.').pop()?.toLowerCase() || 'jpg';
+							url.searchParams.set('dl', `${safeFilename(name)}.${extension}`);
+							window.location.href = url.href;
+							showShareToast('Photo downloaded');
+						} catch {
+							window.open(src, '_blank', 'noopener,noreferrer');
+							showShareToast('Photo opened — save it from the new tab');
+						}
+					}
+
+					function buildPost(data: ShareBikeData, platform: 'whatsapp' | 'plain' = 'plain'): string {
+						const isWhatsApp = platform === 'whatsapp';
+						/* WhatsApp has native ~strike~ and *bold*. Other apps have no native
+						   strikethrough, so use Unicode combining overlay marks as a fallback. */
+						const strong = (text: string) => (isWhatsApp ? `*${text}*` : text);
+						const strikeMarks = String.fromCharCode(0x0336, 0x0335);
+						const strike = (text: string) =>
+							isWhatsApp ? `~${text}~` : text.split('').map((char) => (char === ' ' ? char : `${char}${strikeMarks}`)).join('');
+
+						const bikeName = `${data.year ? `${data.year} ` : ''}${data.name}`.trim();
+						const heading = data.context === 'rent' ? 'FOR RENT' : 'FOR SALE';
+						const number = shareSheet?.dataset.whatsappNumber || '';
+						const phone = number ? `+91 ${number.slice(2)}` : '+91 9370343713';
+						const websiteLink = shareSheet?.dataset.websiteUrl || 'https://www.vo2bikes.com/';
+						const instagramLink = shareSheet?.dataset.instagramUrl || 'https://www.instagram.com/vo2bikes/';
+						const facebookLink = shareSheet?.dataset.facebookUrl || 'https://www.facebook.com/share/19RrCYiHSx/?mibextid=wwXIfr';
+
+						const lines = [
+							strong('VO₂ BIKES'),
+							'',
+							`🚴 ${strong(`${heading}: ${bikeName}`)}`,
+							'',
+						];
+
+						const priceParts = [data.newPrice && strike(data.newPrice), data.price && strong(data.price)].filter(Boolean);
+						if (priceParts.length) lines.push(priceParts.join(' '), '');
+
+						lines.push(strong('Bike Specifications'));
+						data.specs.forEach((spec) => {
+							const divider = spec.indexOf(':');
+							const label = (divider === -1 ? spec : spec.slice(0, divider)).trim();
+							const value = divider === -1 ? '' : spec.slice(divider + 1).trim();
+							lines.push(`- ${label}${value ? `: ${value}` : ''}`);
+						});
+
+						lines.push(
+							'',
+							'📸 More Photos & Complete Specifications:',
+							data.url,
+							'',
+							'Interested? Feel free to connect with us for more details.',
+							'',
+							`📞 Call / 🅦 WhatsApp: ${phone}`,
+							`🌐 ${websiteLink}`,
+							`🅘 ${instagramLink}`,
+							`🅕 ${facebookLink}`,
+							'',
+							strong('VO₂ BIKES – RIDE. VERIFIED.'),
+						);
+						return lines.join('\n');
+					}
+
+					function readShareData(btn: HTMLElement): ShareBikeData {
+						return {
+							url: new URL(btn.dataset.shareUrl || '', window.location.origin).href,
+							name: btn.dataset.shareName || 'This bike',
+							year: btn.dataset.shareYear || '',
+							score: btn.dataset.shareScore || '',
+							price: btn.dataset.sharePrice || '',
+							newPrice: btn.dataset.shareNewPrice || '',
+							context: btn.dataset.shareContext || 'buy',
+							image: btn.dataset.shareImage || '',
+							images: (btn.dataset.shareImages || '').split(',').filter(Boolean),
+							specs: (btn.dataset.shareSpecs || '').split(' | ').filter(Boolean),
+						};
+					}
+
+					function openShareSheet(btn: HTMLElement) {
+						if (!shareSheet) return;
+						currentBike = readShareData(btn);
+
+						/* Public pages only copy the link. Social sharing lives on the unlisted /share/ page. */
+						if (document.body.dataset.socialShare !== 'true') {
+							void copyText(currentBike.url).then((copied) =>
+								showShareToast(copied ? 'Link copied to clipboard' : 'Select the link to copy it'),
+							);
+							return;
+						}
+
+						const post = buildPost(currentBike, 'plain');
+						const title = shareSheet.querySelector<HTMLElement>('#share-sheet-title');
+						const previewImage = shareSheet.querySelector<HTMLImageElement>('.share-preview-image');
+						const previewName = shareSheet.querySelector<HTMLElement>('.share-preview-name');
+						const previewMeta = shareSheet.querySelector<HTMLElement>('.share-preview-meta');
+						const template = shareSheet.querySelector<HTMLTextAreaElement>('#share-template');
+
+						if (title) title.textContent = currentBike.name;
+						if (previewImage) {
+							previewImage.src = currentBike.image;
+							previewImage.alt = currentBike.name;
+						}
+						if (previewName) {
+							previewName.textContent = `${currentBike.year ? `${currentBike.year} ` : ''}${currentBike.name}`.trim();
+						}
+						if (previewMeta) {
+							previewMeta.textContent =
+								currentBike.context === 'rent'
+									? 'Available for rent'
+									: [currentBike.score && `${currentBike.score}/100`, currentBike.price].filter(Boolean).join(' · ');
+						}
+						if (template) template.value = post;
+						const download = shareSheet.querySelector<HTMLElement>('[data-download-url]');
+						if (download) {
+							download.dataset.downloadUrl = currentBike.image;
+							download.dataset.downloadName = currentBike.name;
+						}
+						if (!shareSheet.open) shareSheet.showModal();
+					}
+
+					async function shareToInstagram(post: string) {
+						const copied = await copyText(post);
+						window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+						showShareToast(copied ? 'Post copied — paste it into Instagram' : 'Select the post text to copy it');
+					}
+
+					async function handleShareTarget(target?: string) {
+						if (!currentBike) return;
+						const post = buildPost(currentBike, target === 'whatsapp' ? 'whatsapp' : 'plain');
+						const number = shareSheet?.dataset.whatsappNumber || '';
+						if (target === 'whatsapp') {
+							window.open(`https://wa.me/${number}?text=${encodeURIComponent(post)}`, '_blank', 'noopener,noreferrer');
+							void copyText(post).then((copied) =>
+								showShareToast(copied ? 'Post copied — add photos in WhatsApp' : 'Your post is ready in the share sheet'),
+							);
+							return;
+						}
+						if (target === 'facebook') {
+							const sharer = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentBike.url)}&quote=${encodeURIComponent(post)}`;
+							window.open(sharer, '_blank', 'noopener,noreferrer');
+							void copyText(post).then((copied) =>
+								showShareToast(copied ? 'Post copied — add photos on Facebook' : 'Your post is ready in the share sheet'),
+							);
+							return;
+						}
+						if (target === 'instagram') {
+							await shareToInstagram(post);
+							return;
+						}
+						if (target === 'copy') {
+							const copied = await copyText(post);
+							showShareToast(copied ? 'Post copied — paste it anywhere' : 'Select the post text to copy it');
+							return;
+						}
+						if (target === 'link') {
+							const copied = await copyText(currentBike.url);
+							showShareToast(copied ? 'Link copied to clipboard' : 'Select the link to copy it');
+						}
+					}
+
+					/* One delegated handler covers bike cards, detail pages, and ?mode=rent. */
+					document.addEventListener('click', (event) => {
+						const target = event.target instanceof Element ? event.target : null;
+						const btn = target?.closest<HTMLElement>('[data-share-url]');
+						if (btn) {
+							openShareSheet(btn);
+							return;
+						}
+						const option = target?.closest<HTMLElement>('[data-share-target]');
+						if (option) {
+							void handleShareTarget(option.dataset.shareTarget);
+							return;
+						}
+						const download = target?.closest<HTMLElement>('[data-download-url]');
+						if (download) void downloadImage(download);
+					});
+
+					shareSheet?.querySelector('.share-sheet-close')?.addEventListener('click', () => shareSheet.close());
+					shareSheet?.addEventListener('click', (event) => {
+						if (event.target === shareSheet) shareSheet.close();
+					});
+				</script>
+				<style is:global>
+					.global-share-toast { position: fixed; z-index: 1000; right: 1.25rem; bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; max-width: calc(100% - 2rem); padding: 0.75rem 1rem; border: 1px solid var(--signal); background: rgba(8, 12, 15, 0.96); color: var(--paper); font-size: 0.72rem; font-weight: 700; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; pointer-events: none; }
+					.global-share-toast .share-toast-icon { color: var(--signal); }
+					.global-share-toast.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
+
+					.share-sheet { position: fixed; width: min(520px, calc(100% - 2rem)); max-height: min(88dvh, 780px); overflow-y: auto; padding: 1.6rem; border: 1px solid var(--signal); background: #0b1114; color: var(--paper); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7); }
+					.share-sheet::backdrop { background: rgba(5, 8, 10, 0.85); backdrop-filter: blur(4px); }
+					.share-sheet-close { position: absolute; top: 0.6rem; right: 0.7rem; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); background: transparent; color: var(--paper); font-size: 1.4rem; line-height: 1; cursor: pointer; }
+					.share-sheet-close:hover, .share-sheet-close:focus-visible { color: var(--signal); border-color: var(--signal); outline: none; }
+					.share-sheet h2 { margin: 0.35rem 0 1.1rem; font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; line-height: 1; text-transform: uppercase; }
+					.share-preview { display: flex; align-items: center; gap: 1rem; padding: 0.7rem; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); }
+					.share-preview-image { flex: none; width: 84px; height: 70px; object-fit: cover; background: #fff; }
+					.share-preview-details { display: grid; gap: 0.35rem; min-width: 0; }
+					.share-preview-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; line-height: 1.1; text-transform: uppercase; }
+					.share-preview-meta { color: var(--signal); font-size: 0.7rem; }
+					.share-template-label { display: block; margin: 1.2rem 0 0.5rem; color: var(--muted); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+					.share-template { width: 100%; min-height: 190px; padding: 0.8rem; border: 1px solid var(--line); background: #070b0d; color: #d4e0e2; font: inherit; font-size: 0.72rem; line-height: 1.6; resize: vertical; }
+					.share-hint { margin: 0.55rem 0 0; color: var(--muted); font-size: 0.65rem; line-height: 1.6; }
+					.share-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1.1rem; }
+					.share-option { padding: 0.75rem 0.8rem; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: var(--paper); font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+					.share-option:hover, .share-option:focus-visible { border-color: var(--signal); background: rgba(131, 229, 220, 0.08); color: var(--signal); outline: none; }
+					.share-social { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+					@media (max-width: 640px) {
+						.global-share-toast { right: 1rem; bottom: 1rem; left: 1rem; justify-content: center; }
+						.share-sheet { width: calc(100% - 1.5rem); padding: 1.2rem; }
+						.share-actions { grid-template-columns: 1fr; }
+					}
+				</style>
 				<script>
 					/* Dropdowns in the header: close on outside click, Escape or link
 					   activation, and only one panel open at a time. */
