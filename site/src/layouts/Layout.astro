@@ -24,6 +24,7 @@ import { base } from 'astro:config/client';
 import Logo from '../assets/logo_combined_png.png';
 import SocialLinks from '../components/SocialLinks.astro';
 import backdrop from '../assets/logo3.webp';
+import shareLogo from '../assets/share_logo.png';
 import instagramIcon from '../assets/insta.jpg';
 import facebookIcon from '../assets/facebook.svg';
 import whatsappIcon from '../assets/whatsapp.png';
@@ -92,13 +93,13 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 									<a href={`${base}coaching/`} aria-current={currentPath.startsWith(`${base}coaching/`) ? 'page' : undefined}>COACHING</a>
 									<a href={`${base}services/`} aria-current={currentPath.startsWith(`${base}services/`) ? 'page' : undefined}>SERVICES</a>
 									<a class="nav-wide" href={`${base}inspection/`} aria-current={currentPath.startsWith(`${base}inspection/`) ? 'page' : undefined}>INSPECTION</a>
-									<a class="nav-wide" href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>ABOUT</a>
+									<a class="nav-wide" href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>ABOUT US</a>
 									<details class="nav-more" aria-current={currentPath.startsWith(`${base}inspection/`) || (currentPath.startsWith(`${base}about/`)) ? 'page' : undefined}>
 										<summary>More</summary>
 										<div class="nav-more-list">
 											<a href={`${base}inspection/`} aria-current={currentPath.startsWith(`${base}inspection/`) ? 'page' : undefined}>INSPECTION</a>
 											<!-- <a href={`${base}sell/`} aria-current={currentPath.startsWith(`${base}sell/`) ? 'page' : undefined}>Sell your bike</a> -->
-											<a href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>About</a>
+											<a href={`${base}about/`} aria-current={currentPath.startsWith(`${base}about/`) ? 'page' : undefined}>About Us</a>
 										</div>
 									</details>
 								</>
@@ -148,6 +149,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 					data-website-url={websiteUrl}
 					data-instagram-url={instagramUrl}
 					data-facebook-url={facebookUrl}
+					data-share-logo={shareLogo.src}
 				>
 					<button class="share-sheet-close" type="button" aria-label="Close sharing options">×</button>
 					<p class="eyebrow">Share this bike</p>
@@ -159,8 +161,28 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 							<span class="share-preview-meta"></span>
 						</div>
 					</div>
+					{socialShare && (
+						<div class="share-inline-links">
+							<span>Click:</span>
+							<a class="share-text-link share-text-link-primary" href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Open VO2 Bikes on Instagram (@vo2bikes)">Instagram: @vo2bikes</a>
+							<a class="share-text-link" href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Open VO2 Bikes on Facebook">facebook</a>
+						</div>
+					)}
 					<label class="share-template-label" for="share-template">Your ready-to-share post</label>
 					<textarea id="share-template" class="share-template" readonly rows="9"></textarea>
+					{socialShare && (
+						<div class="share-graphic">
+							<p class="eyebrow">Ready-to-post image</p>
+							<div class="share-graphic-body">
+								<canvas class="share-graphic-preview" width="216" height="270" aria-label="Preview of the generated social post image"></canvas>
+								<div class="share-graphic-actions">
+									<button type="button" class="share-option" data-share-target="post-image">Download post image</button>
+									<button type="button" class="share-option" data-share-target="status-image">Download status image</button>
+									<button type="button" class="share-option" data-share-target="share-image">Share image</button>
+								</div>
+							</div>
+						</div>
+					)}
 					<p class="share-hint">Pick a destination below. On phones, Instagram uses the native share sheet so you can attach the bike photos.</p>
 					<div class="share-actions">
 						<button type="button" class="share-option" data-share-target="whatsapp" hidden={!socialShare}>WhatsApp</button>
@@ -179,6 +201,8 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 					)}
 				</dialog>
 				<script>
+					interface ShareSpec { label: string; value: string }
+					interface ShareCheck { name: string; score: number; max: number }
 					interface ShareBikeData {
 						url: string;
 						name: string;
@@ -190,11 +214,15 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 						image: string;
 						images: string[];
 						specs: string[];
+						specCards: ShareSpec[];
+						checks: ShareCheck[];
+						imageData: string;
 					}
 
 					const shareToast = document.querySelector<HTMLElement>('.global-share-toast');
 					const shareToastMessage = shareToast?.querySelector<HTMLElement>('.share-toast-message');
 					const shareSheet = document.querySelector<HTMLDialogElement>('.share-sheet');
+					const shareLogoUrl = shareSheet?.dataset.shareLogo || '';
 					let shareToastTimer: number | undefined;
 					let currentBike: ShareBikeData | null = null;
 
@@ -271,12 +299,14 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 						const lines = [
 							strong('VO₂ BIKES'),
 							'',
-							`🚴 ${strong(`${heading}: ${bikeName}`)}`,
+							strong(`${heading}: ${bikeName}`),
 							'',
 						];
 
 						const priceParts = [data.newPrice && strike(data.newPrice), data.price && strong(data.price)].filter(Boolean);
 						if (priceParts.length) lines.push(priceParts.join(' '), '');
+
+						lines.push('Location: Pune, India · Delivery across India', '');
 
 						lines.push(strong('Bike Specifications'));
 						data.specs.forEach((spec) => {
@@ -288,19 +318,27 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 
 						lines.push(
 							'',
-							'📸 More Photos & Complete Specifications:',
+							'More Photos & Complete Specifications:',
 							data.url,
 							'',
 							'Interested? Feel free to connect with us for more details.',
 							'',
-							`📞 Call / 🅦 WhatsApp: ${phone}`,
-							`🌐 ${websiteLink}`,
-							`🅘 ${instagramLink}`,
-							`🅕 ${facebookLink}`,
+							`Call / WhatsApp: ${phone}`,
+							`Insta: ${instagramLink}`,
+							`FB: ${facebookLink}`,
+							websiteLink,
 							'',
 							strong('VO₂ BIKES – RIDE. VERIFIED.'),
 						);
 						return lines.join('\n');
+					}
+
+					function parseShareJson<T>(raw: string | undefined, fallback: T): T {
+						try {
+							return raw ? (JSON.parse(raw) as T) : fallback;
+						} catch {
+							return fallback;
+						}
 					}
 
 					function readShareData(btn: HTMLElement): ShareBikeData {
@@ -315,10 +353,314 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 							image: btn.dataset.shareImage || '',
 							images: (btn.dataset.shareImages || '').split(',').filter(Boolean),
 							specs: (btn.dataset.shareSpecs || '').split(' | ').filter(Boolean),
+							specCards: parseShareJson<ShareSpec[]>(btn.dataset.shareSpecJson, []),
+							checks: parseShareJson<ShareCheck[]>(btn.dataset.shareChecks, []),
+							imageData: btn.dataset.shareImageData || '',
 						};
 					}
 
-					function openShareSheet(btn: HTMLElement) {
+					function wrapCanvasText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number) {
+						const words = text.split(/\s+/).filter(Boolean);
+						const lines: string[] = [];
+						let line = '';
+						for (const word of words) {
+							const next = line ? `${line} ${word}` : word;
+							if (ctx.measureText(next).width > maxWidth && line) {
+								lines.push(line);
+								line = word;
+							} else {
+								line = next;
+							}
+						}
+						if (line) lines.push(line);
+						if (lines.length <= maxLines) return lines;
+						const kept = lines.slice(0, maxLines);
+						kept[maxLines - 1] = `${kept[maxLines - 1].replace(/\s+\S*$/, '')}…`;
+						return kept;
+					}
+
+					function fitCanvasText(
+						ctx: CanvasRenderingContext2D,
+						text: string,
+						x: number,
+						y: number,
+						maxWidth: number,
+						baseSize: number,
+						minSize: number,
+						weight: number,
+						family: string,
+						color: string,
+					) {
+						let size = baseSize;
+						ctx.font = `${weight} ${size}px '${family}', sans-serif`;
+						while (ctx.measureText(text).width > maxWidth && size > minSize) {
+							size -= 1;
+							ctx.font = `${weight} ${size}px '${family}', sans-serif`;
+						}
+						ctx.fillStyle = color;
+						ctx.fillText(text, x, y);
+					}
+
+					function roundedRect(
+						ctx: CanvasRenderingContext2D,
+						x: number,
+						y: number,
+						width: number,
+						height: number,
+						radius: number,
+					) {
+						const r = Math.min(radius, height / 2, width / 2);
+						ctx.beginPath();
+						ctx.moveTo(x + r, y);
+						ctx.arcTo(x + width, y, x + width, y + height, r);
+						ctx.arcTo(x + width, y + height, x, y + height, r);
+						ctx.arcTo(x, y + height, x, y, r);
+						ctx.arcTo(x, y, x + width, y, r);
+						ctx.closePath();
+					}
+
+					async function loadGraphicImage(dataUrl: string): Promise<HTMLImageElement | null> {
+						if (!dataUrl) return null;
+						const image = new Image();
+						image.src = dataUrl;
+						try {
+							await image.decode();
+						} catch {
+							// Fall back to the branded placeholder below.
+						}
+						return image.naturalWidth ? image : null;
+					}
+
+					async function renderShareCanvas(data: ShareBikeData, format: 'post' | 'status'): Promise<HTMLCanvasElement> {
+						await document.fonts.ready;
+						const canvas = document.createElement('canvas');
+						const cardWidth = 1080;
+						const cardHeight = 1350;
+						const height = format === 'status' ? 1920 : 1350;
+						const offsetY = (height - cardHeight) / 2;
+						canvas.width = cardWidth;
+						canvas.height = height;
+						const ctx = canvas.getContext('2d');
+						if (!ctx) return canvas;
+
+						ctx.fillStyle = '#090d10';
+						ctx.fillRect(0, 0, cardWidth, height);
+						ctx.strokeStyle = 'rgba(226, 242, 244, 0.045)';
+						ctx.lineWidth = 1;
+						for (let x = 0; x <= cardWidth; x += 90) {
+							ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, height); ctx.stroke();
+						}
+						for (let y = 0; y <= height; y += 90) {
+							ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(cardWidth, y + 0.5); ctx.stroke();
+						}
+
+						ctx.save();
+						ctx.translate(0, offsetY);
+
+						const logo = await loadGraphicImage(shareLogoUrl);
+						if (logo) {
+							const logoWidth = 230;
+							const logoHeight = logoWidth * (logo.naturalHeight / logo.naturalWidth);
+							ctx.drawImage(logo, 56, 14, logoWidth, logoHeight);
+						}
+						ctx.fillStyle = '#00ff11';
+						ctx.fillRect(56, 130, 84, 4);
+
+						const heading = data.context === 'rent' ? 'FOR RENT · PRE-OWNED' : 'FOR SALE · PRE-OWNED';
+						ctx.fillStyle = '#00ff11';
+						ctx.font = "700 22px 'DM Sans', sans-serif";
+						ctx.fillText(heading, 56, 164);
+
+						const title = `${data.year ? `${data.year} ` : ''}${data.name}`.toUpperCase();
+						let titleSize = 78;
+						let titleLines = wrapCanvasText(ctx, title, 968, 2);
+						while (titleLines.length > 2 && titleSize > 48) {
+							titleSize -= 4;
+							ctx.font = `700 ${titleSize}px 'Barlow Condensed', sans-serif`;
+							titleLines = wrapCanvasText(ctx, title, 968, 2);
+						}
+						ctx.fillStyle = '#f1f7f8';
+						ctx.font = `700 ${titleSize}px 'Barlow Condensed', sans-serif`;
+						titleLines.forEach((line, index) => ctx.fillText(line, 56, 232 + index * 70));
+
+						const imageY = 232 + (titleLines.length - 1) * 70 + 24;
+						const shift = imageY - 318;
+						const image = await loadGraphicImage(data.imageData);
+						ctx.fillStyle = '#f1f7f8';
+						ctx.fillRect(56, imageY, 968, 400);
+						if (image) {
+							const scale = Math.min(968 / image.naturalWidth, 400 / image.naturalHeight);
+							const width = image.naturalWidth * scale;
+							const height = image.naturalHeight * scale;
+							ctx.drawImage(image, 56 + (968 - width) / 2, imageY + (400 - height) / 2, width, height);
+						} else {
+							ctx.fillStyle = '#151d20';
+							ctx.font = "700 42px 'Barlow Condensed', sans-serif";
+							ctx.textAlign = 'center';
+							ctx.fillText(data.name.toUpperCase(), 540, 530 + shift);
+							ctx.textAlign = 'left';
+						}
+						ctx.strokeStyle = 'rgba(0, 255, 17, 0.5)';
+						ctx.lineWidth = 2;
+						ctx.strokeRect(56, imageY, 968, 400);
+						ctx.fillStyle = 'rgba(7, 13, 15, 0.92)';
+						ctx.fillRect(72, 332 + shift, 196, 34);
+						ctx.fillStyle = '#00ff11';
+						ctx.font = "700 18px 'DM Sans', sans-serif";
+						ctx.fillText('✓ INSPECTED', 86, 355 + shift);
+
+						if (data.context === 'rent') {
+							ctx.fillStyle = '#f1f7f8';
+							ctx.font = "700 64px 'Barlow Condensed', sans-serif";
+							ctx.fillText('PRICE ON REQUEST', 56, 835 + shift);
+						} else {
+							if (data.newPrice) {
+								ctx.font = "500 34px 'DM Sans', sans-serif";
+								ctx.fillStyle = '#aab8bc';
+								const oldWidth = ctx.measureText(data.newPrice).width;
+								ctx.fillText(data.newPrice, 56, 766 + shift);
+								ctx.strokeStyle = '#aab8bc';
+								ctx.lineWidth = 2;
+								ctx.beginPath(); ctx.moveTo(56, 755 + shift); ctx.lineTo(56 + oldWidth, 755 + shift); ctx.stroke();
+							}
+							ctx.fillStyle = '#f1f7f8';
+							ctx.font = "700 72px 'Barlow Condensed', sans-serif";
+							ctx.fillText(data.price || 'PRICE ON REQUEST', 56, 835 + shift);
+						}
+
+						ctx.fillStyle = '#00ff11';
+						ctx.font = "700 19px 'DM Sans', sans-serif";
+						ctx.fillText('📍 AVAILABLE IN PUNE · Delivery across India', 56, 880 + shift);
+
+						ctx.fillStyle = '#aab8bc';
+						ctx.font = "700 18px 'DM Sans', sans-serif";
+						ctx.fillText(data.context === 'rent' ? 'RENTAL DETAILS' : 'KEY SPECS', 56, 928 + shift);
+						data.specCards.slice(0, 4).forEach((spec, index) => {
+							const x = 56 + (index % 2) * 496;
+							const y = 968 + Math.floor(index / 2) * 64 + shift;
+							ctx.fillStyle = '#00ff11';
+							ctx.font = "700 16px 'DM Sans', sans-serif";
+							ctx.fillText(spec.label.toUpperCase(), x, y);
+							let valueSize = 24;
+							ctx.font = `600 ${valueSize}px 'DM Sans', sans-serif`;
+							while (ctx.measureText(spec.value).width > 462 && valueSize > 17) {
+								valueSize -= 1;
+								ctx.font = `600 ${valueSize}px 'DM Sans', sans-serif`;
+							}
+							ctx.fillStyle = '#f1f7f8';
+							ctx.fillText(spec.value, x, y + 27);
+						});
+
+						ctx.fillStyle = '#aab8bc';
+						ctx.font = "700 18px 'DM Sans', sans-serif";
+						ctx.fillText('INSPECTION SCORE', 56, 1104 + shift);
+
+						const checks = data.checks.slice(0, 6);
+						const totalMax = checks.reduce((sum, check) => sum + Math.max(check.max, 0), 0);
+						const checkTotal = checks.reduce((sum, check) => sum + Math.max(check.score, 0), 0);
+						const parsedScore = Number(data.score);
+						const scoreValue = data.score && Number.isFinite(parsedScore)
+							? parsedScore
+							: checks.length && totalMax > 0
+								? (checkTotal / totalMax) * 100
+								: 0;
+						const scoreText = data.score || (checks.length ? String(Math.round(scoreValue)) : '—');
+						const scoreRatio = Math.max(0, Math.min(1, scoreValue / 100));
+
+						ctx.textAlign = 'right';
+						ctx.fillStyle = '#00ff11';
+						ctx.font = "700 22px 'DM Sans', sans-serif";
+						ctx.fillText(`${scoreText}/100`, 1024, 1104 + shift);
+						ctx.textAlign = 'left';
+
+						const trackX = 56;
+						const trackWidth = 968;
+						const trackY = 1130 + shift;
+						const trackHeight = 18;
+						const progressWidth = trackWidth * scoreRatio;
+
+						roundedRect(ctx, trackX, trackY, trackWidth, trackHeight, trackHeight / 2);
+						ctx.fillStyle = 'rgba(226, 242, 244, 0.12)';
+						ctx.fill();
+						ctx.strokeStyle = 'rgba(226, 242, 244, 0.16)';
+						ctx.lineWidth = 1;
+						ctx.stroke();
+
+						if (progressWidth > 2) {
+							ctx.save();
+							const gradient = ctx.createLinearGradient(trackX, 0, trackX + progressWidth, 0);
+							gradient.addColorStop(0, '#008f0d');
+							gradient.addColorStop(0.55, '#00ff11');
+							gradient.addColorStop(1, '#c8ffc0');
+							ctx.shadowColor = 'rgba(0, 255, 17, 0.55)';
+							ctx.shadowBlur = 16;
+							roundedRect(ctx, trackX, trackY, progressWidth, trackHeight, trackHeight / 2);
+							ctx.fillStyle = gradient;
+							ctx.fill();
+							ctx.restore();
+
+							ctx.save();
+							ctx.globalAlpha = 0.55;
+							roundedRect(ctx, trackX + 6, trackY + 3, Math.max(0, progressWidth - 12), 4, 2);
+							ctx.fillStyle = '#f0fff0';
+							ctx.fill();
+							ctx.restore();
+						}
+
+						const numberRaw = shareSheet?.dataset.whatsappNumber || '';
+						const phoneDisplay = numberRaw ? `+91 ${numberRaw.slice(2)}` : '+91 9370343713';
+						const website = shareSheet?.dataset.websiteUrl || 'https://www.vo2bikes.com/';
+						const footerBase = 1240 + shift;
+						fitCanvasText(ctx, 'CALL / WHATSAPP', 56, footerBase, 460, 18, 14, 700, 'DM Sans', '#00ff11');
+						fitCanvasText(ctx, phoneDisplay, 56, footerBase + 40, 460, 36, 24, 700, 'Barlow Condensed', '#f1f7f8');
+						fitCanvasText(ctx, `Website: ${website}`, 56, footerBase + 76, 460, 21, 15, 600, 'DM Sans', '#aab8bc');
+						fitCanvasText(ctx, 'FOLLOW', 540, footerBase, 484, 18, 14, 700, 'DM Sans', '#00ff11');
+						fitCanvasText(ctx, 'Instagram: @vo2bikes', 540, footerBase + 40, 484, 25, 18, 600, 'DM Sans', '#f1f7f8');
+
+						ctx.restore();
+						return canvas;
+					}
+
+					function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+						return new Promise((resolve, reject) => {
+							canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Image export failed'))), 'image/png');
+						});
+					}
+
+					function downloadBlob(blob: Blob, filename: string) {
+						const url = URL.createObjectURL(blob);
+						const link = document.createElement('a');
+						link.href = url;
+						link.download = filename;
+						document.body.append(link);
+						link.click();
+						link.remove();
+						window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+					}
+
+					async function exportShareImage(format: 'post' | 'status', share: boolean) {
+						if (!currentBike) return;
+						const canvas = await renderShareCanvas(currentBike, format);
+						const blob = await canvasToBlob(canvas);
+						const filename = `${safeFilename(currentBike.name)}-${format}.png`;
+						if (share && typeof navigator.share === 'function') {
+							const file = new File([blob], filename, { type: 'image/png' });
+							const canShare = (navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean }).canShare?.({ files: [file] });
+							if (canShare) {
+								try {
+									await navigator.share({ files: [file], title: currentBike.name, text: `VO₂ BIKES — ${currentBike.name}` });
+									showShareToast('Post image shared');
+									return;
+								} catch (error) {
+									if ((error as DOMException)?.name === 'AbortError') return;
+								}
+							}
+						}
+						downloadBlob(blob, filename);
+						showShareToast(format === 'status' ? 'Status image downloaded' : 'Post image downloaded');
+					}
+
+					async function openShareSheet(btn: HTMLElement) {
 						if (!shareSheet) return;
 						currentBike = readShareData(btn);
 
@@ -352,6 +694,15 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 									: [currentBike.score && `${currentBike.score}/100`, currentBike.price].filter(Boolean).join(' · ');
 						}
 						if (template) template.value = post;
+						const graphicPreview = shareSheet.querySelector<HTMLCanvasElement>('.share-graphic-preview');
+						if (graphicPreview) {
+							const previewCtx = graphicPreview.getContext('2d');
+							if (previewCtx) {
+								const generated = await renderShareCanvas(currentBike, 'post');
+								previewCtx.clearRect(0, 0, graphicPreview.width, graphicPreview.height);
+								previewCtx.drawImage(generated, 0, 0, graphicPreview.width, graphicPreview.height);
+							}
+						}
 						const download = shareSheet.querySelector<HTMLElement>('[data-download-url]');
 						if (download) {
 							download.dataset.downloadUrl = currentBike.image;
@@ -394,6 +745,14 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 							showShareToast(copied ? 'Post copied — paste it anywhere' : 'Select the post text to copy it');
 							return;
 						}
+						if (target === 'post-image' || target === 'status-image') {
+							await exportShareImage(target === 'status-image' ? 'status' : 'post', false);
+							return;
+						}
+						if (target === 'share-image') {
+							await exportShareImage('post', true);
+							return;
+						}
 						if (target === 'link') {
 							const copied = await copyText(currentBike.url);
 							showShareToast(copied ? 'Link copied to clipboard' : 'Select the link to copy it');
@@ -405,7 +764,7 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 						const target = event.target instanceof Element ? event.target : null;
 						const btn = target?.closest<HTMLElement>('[data-share-url]');
 						if (btn) {
-							openShareSheet(btn);
+							void openShareSheet(btn);
 							return;
 						}
 						const option = target?.closest<HTMLElement>('[data-share-target]');
@@ -435,19 +794,31 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 					.share-preview { display: flex; align-items: center; gap: 1rem; padding: 0.7rem; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); }
 					.share-preview-image { flex: none; width: 84px; height: 70px; object-fit: cover; background: #fff; }
 					.share-preview-details { display: grid; gap: 0.35rem; min-width: 0; }
+					.share-inline-links { display: flex; align-items: center; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.75rem; font-size: 0.72rem; color: var(--muted); }
 					.share-preview-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; line-height: 1.1; text-transform: uppercase; }
 					.share-preview-meta { color: var(--signal); font-size: 0.7rem; }
 					.share-template-label { display: block; margin: 1.2rem 0 0.5rem; color: var(--muted); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 					.share-template { width: 100%; min-height: 190px; padding: 0.8rem; border: 1px solid var(--line); background: #070b0d; color: #d4e0e2; font: inherit; font-size: 0.72rem; line-height: 1.6; resize: vertical; }
+					.share-graphic { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+					.share-graphic > .eyebrow { margin: 0 0 0.7rem; }
+					.share-graphic-body { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 1rem; align-items: start; }
+					.share-graphic-preview { width: 130px; height: 163px; border: 1px solid rgba(0, 255, 17, 0.5); background: #090d10; object-fit: contain; }
+					.share-graphic-actions { display: grid; gap: 0.5rem; }
 					.share-hint { margin: 0.55rem 0 0; color: var(--muted); font-size: 0.65rem; line-height: 1.6; }
 					.share-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1.1rem; }
 					.share-option { padding: 0.75rem 0.8rem; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: var(--paper); font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
 					.share-option:hover, .share-option:focus-visible { border-color: var(--signal); background: rgba(131, 229, 220, 0.08); color: var(--signal); outline: none; }
 					.share-social { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+					.share-text-link { color: var(--signal); font-size: 0.78rem; font-weight: 700; text-decoration: none; border-bottom: 1px solid rgba(0, 255, 17, 0.45); }
+					.share-text-link:hover, .share-text-link:focus-visible { color: var(--paper); border-bottom-color: var(--paper); outline: none; }
+					.share-text-link-primary { padding: 0.3rem 0.5rem; border: 1px solid rgba(0, 255, 17, 0.55); background: rgba(0, 255, 17, 0.08); font-size: 0.92rem; }
+					.share-text-link-primary:hover, .share-text-link-primary:focus-visible { border-color: var(--paper); background: rgba(241, 247, 248, 0.08); }
 					@media (max-width: 640px) {
 						.global-share-toast { right: 1rem; bottom: 1rem; left: 1rem; justify-content: center; }
 						.share-sheet { width: calc(100% - 1.5rem); padding: 1.2rem; }
 						.share-actions { grid-template-columns: 1fr; }
+						.share-graphic-body { grid-template-columns: 1fr; }
+						.share-graphic-preview { width: 160px; height: 200px; }
 					}
 				</style>
 				<script>
@@ -497,6 +868,13 @@ const bodyBackground = `body { background: #090d10 url('${backdrop.src}') center
 			/* Every top-level page hero uses this band, so the transparent area
 			   above the first opaque section is the same height everywhere. */
 			.hero-band { display: flex; flex-direction: column; justify-content: flex-start; min-height: var(--hero-band-min); }
+			/* Nudge the copy on every top banner the same small amount. */
+			.hero-band .hero-copy,
+			.hero-band .intro-inner,
+			.about-hero .about-inner,
+			.coaching-banner .coaching-banner-copy { translate: -10px -8px; }
+			.hero-band .lead,
+			.coaching-banner-copy .lead { line-height: 1.5; }
 			@media (max-width: 760px) { :root { --hero-band-min: min(560px, calc(100svh - 150px)); } }
 			* { box-sizing: border-box; }
 			html { min-width: 320px; scroll-behavior: smooth; }
