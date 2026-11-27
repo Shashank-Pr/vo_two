@@ -1,0 +1,47 @@
+---
+import instagramIcon from '../assets/insta.jpg';
+import facebookIcon from '../assets/facebook.svg';
+import whatsappIcon from '../assets/whatsapp.png';
+import { facebookUrl, instagramUrl, websiteUrl, whatsappHref } from '../data/contact';
+
+interface Props {
+	compact?: boolean;
+	label?: string;
+}
+
+const { compact = false, label = '' } = Astro.props;
+---
+
+<div class:list={['social-links', { compact }]} aria-label="VO2 Bikes online links">
+	{label && <span class="social-label">{label}</span>}
+	<div class="social-icons">
+		<a href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="VO2 Bikes on Instagram" title="Instagram">
+			<img src={instagramIcon.src} alt="" width="16" height="16" loading="lazy" />
+		</a>
+		<a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="VO2 Bikes on Facebook" title="Facebook">
+			<img src={facebookIcon.src} alt="" width="16" height="16" loading="lazy" />
+		</a>
+		<a href={whatsappHref('Hi VO2 Bikes!')} target="_blank" rel="noopener noreferrer" aria-label="Chat with VO2 Bikes on WhatsApp" title="WhatsApp">
+			<img src={whatsappIcon.src} alt="" width="16" height="16" loading="lazy" />
+		</a>
+		<a href={websiteUrl} target="_blank" rel="noopener noreferrer" aria-label="VO2 Bikes website" title="Website">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<circle cx="12" cy="12" r="9"></circle>
+				<path d="M3 12h18"></path>
+				<path d="M12 3c2.5 2.4 3.8 5.4 3.8 9S14.5 18.6 12 21c-2.5-2.4-3.8-5.4-3.8-9S9.5 5.4 12 3z"></path>
+			</svg>
+		</a>
+	</div>
+</div>
+
+<style>
+	.social-links { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+	.social-label { color: var(--muted); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; }
+	.social-icons { display: flex; gap: 0.45rem; }
+	.social-icons a { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: var(--paper); transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.social-icons a:hover, .social-icons a:focus-visible { border-color: var(--signal); color: var(--signal); background: rgba(131, 229, 220, 0.08); outline: none; }
+	.social-icons img, .social-icons svg { width: 16px; height: 16px; object-fit: contain; }
+	.social-links.compact { gap: 0.5rem; }
+	.social-links.compact .social-icons a { width: 28px; height: 28px; }
+	.social-links.compact .social-icons img, .social-links.compact .social-icons svg { width: 14px; height: 14px; }
+</style>

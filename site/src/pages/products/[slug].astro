@@ -1,0 +1,449 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getBicycles, urlFor } from '../../data/bicycles';
+import { whatsappHref } from '../../data/contact';
+import { base } from 'astro:config/client';
+import backdrop from '../../assets/backdrop.avif';
+import locationIcon from '../../assets/location.png';
+
+const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`;
+
+export async function getStaticPaths() {
+	const bicycles = await getBicycles();
+	return bicycles.map((bike) => ({
+		params: { slug: bike.slug },
+		props: { bike },
+	}));
+}
+
+// Detail pages are prerendered, so Astro.props can hold the price from the
+// last build. Fetch the current Sanity record on every render and use that
+// instead, while keeping getStaticPaths() for the stable URL list.
+const { slug } = Astro.params;
+const currentBikes = await getBicycles();
+const bike = currentBikes.find((candidate) => candidate.slug === slug) ?? Astro.props.bike;
+const gallery = [bike.image, ...bike.gallery];
+const specs = bike.specList ?? [];
+const purchaseMessage = `Hi VO2 Bikes, I'm interested in the ${bike.name} (${bike.year}) listed at ${bike.priceLabel}. Is it still available?`;
+// The rental fleet links here with ?mode=rent. This page is prerendered as a
+// single URL, so the rental message is swapped in at runtime by the inline
+// script below the product layout.
+const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.year}). Could you share the rental details and availability?`;
+---
+
+<Layout title={`${bike.name} | VO2 Bikes`} description={`${bike.year} ${bike.name}, inspected and scored ${bike.score}/100 by VO2 Bikes.`}>
+	<nav class="breadcrumbs" aria-label="Breadcrumb">
+		<a href={`${base}`}>Bikes</a><span aria-hidden="true">/</span><span>{bike.name}</span>
+	</nav>
+	<style is:inline set:html={inlineStyles}></style>
+	<section class="product-layout">
+		<section class="product-gallery" aria-label={`${bike.name} photos`}>
+			<figure class="gallery-canvas">
+				<button class="gallery-open" type="button" aria-label={`View ${bike.name} photos full screen`}>
+					<img
+						src={urlFor(gallery[0]).width(1200).url()}
+						alt={`${bike.name}, primary product view`}
+						fetchpriority="high"
+					/>
+				</button>
+				<figcaption class="gallery-count">01 / {String(gallery.length).padStart(2, '0')}</figcaption>
+				<div class="gallery-actions">
+				<button
+					class="gallery-share"
+					type="button"
+					data-share-url={`${base}products/${bike.slug}/`}
+					data-share-name={bike.name}
+					data-share-year={bike.year}
+					data-share-score={bike.score}
+					data-share-price={bike.priceLabel}
+					data-share-new-price={bike.newBikePriceLabel ?? ''}
+					data-share-context="buy"
+					data-share-image={urlFor(bike.image).width(900).url()}
+					data-share-images={gallery.slice(0, 3).map((image) => urlFor(image).width(1200).url()).join(',')}
+					data-share-specs={specs.map((spec) => `${spec.label}: ${spec.value}`).join(' | ')}
+					aria-label={`Share ${bike.name}`}
+				>
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+				</button>
+				</div>
+			</figure>
+			<div class="gallery-thumbs" aria-label={`${bike.name} photo thumbnails`}>
+				{gallery.map((image, index) => (
+					<div class="thumb-item">
+						<button
+							type="button"
+							class:list={['thumb', { 'is-active': index === 0 }]}
+							aria-label={`Show ${bike.name} photo ${index + 1}`}
+							aria-current={index === 0 ? 'true' : undefined}
+							data-index={index}
+							data-src={urlFor(image).width(1200).url()}
+							data-zoom={urlFor(image).width(2400).url()}
+							data-alt={`${bike.name} photo ${index + 1}`}
+						>
+							<img src={urlFor(image).width(180).url()} alt="" loading="lazy" />
+						</button>
+					</div>
+				))}
+			</div>
+		</section>
+
+		<aside class="product-summary">
+			<p class="eyebrow">{bike.year} / verified pre-owned</p>
+			<h1 class="display-heading">{bike.name}</h1>
+			<p class="product-description">{bike.description}</p>
+			<div class="price-score">
+				<div data-price-line>
+					<span>Asking price</span>
+					<p class="detail-price">
+						{bike.newBikePriceLabel && <s>{bike.newBikePriceLabel}</s>}
+						<strong>{bike.priceLabel}</strong>
+					</p>
+				</div>
+				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
+			</div>
+			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
+			<div class="availability-note" data-location-line>
+				<span class="availability-label"><img src={locationIcon.src} alt="" width="18" height="18" /> Available in Pune</span>
+				<p>Bike viewing and pickup by appointment in Pune. Shipping available across India.</p>
+			</div>
+			{bike.available ? (
+				<a class="button-primary enquiry-button" href={whatsappHref(purchaseMessage)} data-rent-href={whatsappHref(rentalMessage)} target="_blank" rel="noopener noreferrer">Enquire about this bike <span aria-hidden="true">↗</span></a>
+			) : (
+				<span class="button-primary enquiry-button is-disabled" aria-disabled="true">Sold out</span>
+			)}
+		</aside>
+	</section>
+
+	<dialog class="lightbox" aria-label={`${bike.name} photos, full screen`}>
+		<button class="lightbox-close" type="button" aria-label="Close full screen photo">×</button>
+		<button class="lightbox-nav lightbox-prev" type="button" aria-label="Previous photo">‹</button>
+		<img class="lightbox-image" src="" alt="" />
+		<button class="lightbox-nav lightbox-next" type="button" aria-label="Next photo">›</button>
+		<p class="lightbox-count" aria-live="polite">01 / 01</p>
+	</dialog>
+
+	<script is:inline>
+		// Rentals reuse this prerendered page via ?mode=rent, so the URL query is
+		// the only place the rental context exists. Runs inline (synchronously)
+		// so the link and price never show the purchase version in rental mode.
+		(() => {
+			if (new URLSearchParams(location.search).get('mode') !== 'rent') return;
+
+			const button = document.querySelector('[data-rent-href]');
+			const href = button?.getAttribute('data-rent-href');
+			if (button && href) button.setAttribute('href', href);
+
+			// Rentals are quoted per booking, so the price line is hidden entirely.
+			const line = document.querySelector('[data-price-line]');
+			if (line) line.hidden = true;
+
+			// The Pune pickup note belongs to the buy listing only.
+			const locationNote = document.querySelector('[data-location-line]');
+			if (locationNote) locationNote.hidden = true;
+
+			// Keep the shared link and template in rental context too.
+			const share = document.querySelector('[data-share-url]');
+			if (share) {
+				share.dataset.shareContext = 'rent';
+				share.dataset.sharePrice = '';
+				if (!share.dataset.shareUrl?.includes('?')) share.dataset.shareUrl += '?mode=rent';
+			}
+		})();
+	</script>
+	{specs.length > 0 && (
+		<section class="spec-section" aria-labelledby="spec-title">
+			<div class="section-heading"><div><h2 id="spec-title">The <span>spec.</span></h2></div></div>
+			<ul class="spec-list" aria-label="Specifications">
+				{specs.map((spec) => (
+					<li><span class="spec-label">{spec.label}:</span><span class="spec-value">{spec.value}</span></li>
+				))}
+			</ul>
+		</section>
+	)}
+
+	<section class="inspection-section" id="inspection" aria-labelledby="inspection-title">
+		<div class="section-heading">
+			<div><p class="eyebrow">Verified by vo2bikes</p><h2 id="inspection-title">Inspection <span>report.</span></h2></div>
+			<p>Each area is checked individually. The totals below make up this bike’s score.</p>
+		</div>
+		<div class="report-score"><strong>{bike.score}</strong><span>/ 100</span><div class="score-track"><span style={`width: ${bike.score}%`}></span></div></div>
+		<ul class="check-list">
+			{bike.checks.map((check) => (
+				<li><span class="check-name"><span aria-hidden="true">✓</span>{check.name}</span><span class="check-points">{check.score}<small> / {check.max}</small></span></li>
+			))}
+		</ul>
+		<p class="report-note">The score reflects this bike’s recorded condition at inspection. Bike-specific measurements and notes are available with the sale.</p>
+	</section>
+
+	<script>
+		const gallery = document.querySelector('.product-gallery');
+		if (gallery) {
+			const canvas = gallery.querySelector('.gallery-canvas');
+			const openButton = gallery.querySelector('.gallery-open');
+			const mainImage = openButton?.querySelector('img');
+			const countEl = gallery.querySelector('.gallery-count');
+			const thumbs = [...gallery.querySelectorAll<HTMLElement>('.thumb')];
+			const lightbox = document.querySelector('.lightbox');
+			const lightboxImage = lightbox?.querySelector('.lightbox-image');
+			const lightboxCount = lightbox?.querySelector('.lightbox-count');
+			let activeIndex = 0;
+			let didSwipe = false;
+
+			const pad = (n) => String(n).padStart(2, '0');
+
+			/* Keep the active thumbnail visible in the strip below the canvas. */
+			const reveal = (thumb) => {
+				const strip = thumb.closest('.gallery-thumbs');
+				if (!strip) return;
+				const stripRect = strip.getBoundingClientRect();
+				const thumbRect = thumb.getBoundingClientRect();
+				if (thumbRect.left < stripRect.left || thumbRect.right > stripRect.right) {
+					strip.scrollBy({
+						left: thumbRect.left - stripRect.left - (stripRect.width - thumbRect.width) / 2,
+						behavior: 'smooth',
+					});
+				}
+			};
+
+			const activate = (thumb) => {
+				thumbs.forEach((t) => {
+					const active = t === thumb;
+					t.classList.toggle('is-active', active);
+					if (active) t.setAttribute('aria-current', 'true');
+					else t.removeAttribute('aria-current');
+				});
+				if (mainImage) mainImage.src = thumb.dataset.src;
+				if (countEl) countEl.textContent = `${pad(Number(thumb.dataset.index) + 1)} / ${pad(thumbs.length)}`;
+				activeIndex = Number(thumb.dataset.index) || 0;
+				reveal(thumb);
+			};
+
+			const setLightboxImage = (index) => {
+				const thumb = thumbs[index];
+				if (!thumb) return;
+				activeIndex = index;
+				const src = thumb.dataset.zoom || thumb.dataset.src || '';
+				if (lightboxImage) {
+					lightboxImage.src = src;
+					lightboxImage.alt = thumb.dataset.alt || '';
+				}
+				if (lightboxCount) lightboxCount.textContent = `${pad(index + 1)} / ${pad(thumbs.length)}`;
+			};
+
+			const openLightbox = (index = activeIndex) => {
+				if (!lightbox) return;
+				setLightboxImage(index);
+				if (!lightbox.open) {
+					if (typeof lightbox.showModal === 'function') lightbox.showModal();
+					else lightbox.setAttribute('open', '');
+					document.body.classList.add('has-lightbox');
+				}
+			};
+
+			const stepLightbox = (delta) => {
+				if (!thumbs.length) return;
+				setLightboxImage((activeIndex + delta + thumbs.length) % thumbs.length);
+			};
+
+			openButton?.addEventListener('click', () => {
+				if (didSwipe) {
+					didSwipe = false;
+					return;
+				}
+				openLightbox();
+			});
+
+			/* Thumbnails only change the displayed image; the large image opens full screen. */
+			thumbs.forEach((thumb) => {
+				thumb.addEventListener('mouseenter', () => activate(thumb));
+				thumb.addEventListener('click', () => activate(thumb));
+			});
+
+			lightbox?.querySelector('.lightbox-close')?.addEventListener('click', () => lightbox.close?.());
+			lightbox?.querySelector('.lightbox-prev')?.addEventListener('click', () => stepLightbox(-1));
+			lightbox?.querySelector('.lightbox-next')?.addEventListener('click', () => stepLightbox(1));
+			lightbox?.addEventListener('click', (event) => {
+				if (event.target === lightbox) lightbox.close?.();
+			});
+			lightbox?.addEventListener('close', () => document.body.classList.remove('has-lightbox'));
+			lightbox?.addEventListener('keydown', (event) => {
+				if (event.key === 'ArrowLeft') {
+					event.preventDefault();
+					stepLightbox(-1);
+				}
+				if (event.key === 'ArrowRight') {
+					event.preventDefault();
+					stepLightbox(1);
+				}
+			});
+
+			/* Touch: a horizontal swipe on the main photo steps to the next or
+			   previous image. Vertical drags are ignored so the page still scrolls. */
+			let swipeStart = null;
+			canvas.addEventListener(
+				'touchstart',
+				(event) => {
+					swipeStart =
+						event.touches.length === 1
+							? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+							: null;
+				},
+				{ passive: true },
+			);
+			canvas.addEventListener('touchcancel', () => {
+				swipeStart = null;
+			}, { passive: true });
+			canvas.addEventListener(
+				'touchend',
+				(event) => {
+					if (!swipeStart) return;
+					const touch = event.changedTouches[0];
+					const dx = touch.clientX - swipeStart.x;
+					const dy = touch.clientY - swipeStart.y;
+					swipeStart = null;
+					if (Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy)) return;
+
+					didSwipe = true;
+					window.setTimeout(() => { didSwipe = false; }, 350);
+					const current = thumbs.findIndex((thumb) => thumb.classList.contains('is-active'));
+					const next = thumbs[dx < 0 ? current + 1 : current - 1];
+					if (next) activate(next);
+				},
+				{ passive: true },
+			);
+
+			let lightboxSwipeStart = null;
+			lightbox?.addEventListener(
+				'touchstart',
+				(event) => {
+					lightboxSwipeStart =
+						event.touches.length === 1
+							? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+							: null;
+				},
+				{ passive: true },
+			);
+			lightbox?.addEventListener(
+				'touchend',
+				(event) => {
+					if (!lightboxSwipeStart) return;
+					const touch = event.changedTouches[0];
+					const dx = touch.clientX - lightboxSwipeStart.x;
+					const dy = touch.clientY - lightboxSwipeStart.y;
+					lightboxSwipeStart = null;
+					if (Math.abs(dx) >= 45 && Math.abs(dx) > Math.abs(dy)) stepLightbox(dx < 0 ? 1 : -1);
+				},
+				{ passive: true },
+			);
+
+			if (thumbs[0]) activate(thumbs[0]);
+		}
+	</script>
+</Layout>
+
+<style>
+	.breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 1.2rem clamp(1.25rem, 5vw, 5.5rem); color: var(--muted); font-size: 0.66rem; }
+	.breadcrumbs a { color: var(--paper); text-decoration-color: var(--signal); text-underline-offset: 3px; }
+	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 1.5rem; }
+	.product-gallery { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; align-items: start; min-width: 0; }
+	/* Thumbnail strip below the main canvas: one scrollable row, so any number of
+	   photos fits without changing the canvas height. Every thumb is the same 4:3
+	   block and the photo is contained inside it (letterboxed, never cropped), so
+	   mixed portrait/landscape sets still line up. */
+	.gallery-thumbs { display: flex; gap: 0.6rem; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: none; }
+	.gallery-thumbs::-webkit-scrollbar { display: none; }
+	.thumb-item { position: relative; flex: 0 0 auto; width: 92px; }
+	.thumb { display: block; width: 100%; padding: 0; border: 1px solid var(--line); background: #151d20; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; transition: border-color 160ms ease; }
+	.thumb:hover { border-color: var(--muted); }
+	.thumb.is-active, .thumb:focus-visible { outline: none; border-color: var(--signal); }
+	.thumb:not(.is-active) { opacity: 0.78; }
+	.thumb:not(.is-active):hover { opacity: 1; }
+	.thumb img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white; }
+	.gallery-canvas { position: relative; margin: 0; overflow: hidden; background: #151d20; aspect-ratio: 4 / 3; cursor: zoom-in; }
+	.gallery-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: inherit; }
+	.gallery-canvas img { display: block; width: 100%; height: 100%; object-fit: contain; background-color: white; }
+	.gallery-actions { position: absolute; z-index: 3; top: 0.75rem; right: 0.75rem; display: flex; gap: 0.35rem; }
+	.gallery-share { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.86); color: var(--paper); cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.gallery-share:hover, .gallery-share:focus-visible { color: var(--signal); border-color: var(--signal); background: rgba(7, 13, 15, 0.96); outline: none; }
+	.gallery-share.is-copied { color: var(--signal); border-color: var(--signal); }
+	.product-gallery figcaption { position: absolute; right: 0.7rem; bottom: 0.7rem; padding: 0.4rem 0.5rem; background: rgba(7, 13, 15, 0.8); color: var(--paper); font-size: 0.6rem; z-index: 3; }
+	.product-gallery figcaption span { color: var(--signal); }
+	:global(body.has-lightbox) { overflow: hidden; }
+	.lightbox { box-sizing: border-box; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: clamp(3.5rem, 6vw, 5rem) clamp(3.5rem, 8vw, 7rem); border: 0; background: rgba(5, 8, 10, 0.98); color: var(--paper); overflow: hidden; }
+	:global(dialog.lightbox::backdrop) { background: rgba(5, 8, 10, 0.98); }
+	.lightbox[open] { display: grid; place-items: center; }
+	.lightbox-image { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: contain; }
+	.lightbox-close, .lightbox-nav { position: fixed; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid rgba(226, 242, 244, 0.35); background: rgba(7, 13, 15, 0.9); color: var(--paper); font-size: 1.6rem; line-height: 1; cursor: pointer; }
+	.lightbox-close:hover, .lightbox-nav:hover, .lightbox-close:focus-visible, .lightbox-nav:focus-visible { color: var(--signal); border-color: var(--signal); outline: none; }
+	.lightbox-close { top: 1rem; right: 1rem; font-size: 2rem; }
+	.lightbox-nav { top: 50%; transform: translateY(-50%); }
+	.lightbox-prev { left: 1rem; }
+	.lightbox-next { right: 1rem; }
+	.lightbox-count { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); margin: 0; color: var(--muted); font-size: 0.7rem; letter-spacing: 0.08em; }
+	.product-summary { position: sticky; top: 1rem; padding: 0; }
+	.product-summary .eyebrow { flex-wrap: wrap; font-size: 0.59rem; }
+	.product-summary .display-heading { margin: 1.2rem 0 0.4rem; font-size: clamp(2.4rem, 5vw, 5.3rem); }
+	.product-description { color: #cfdddf; font-size: 0.82rem; line-height: 1.8; }
+	.availability-note { margin: 0 0 0.75rem; padding: 0.55rem 0.75rem; border: 1px solid rgba(226, 242, 244, 0.08); background: rgba(131, 229, 220, 0.02); }
+	.availability-label { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.35rem; color: var(--signal); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+	.availability-label img { width: 1.3rem; height: 1.3rem; flex: none; object-fit: contain; }
+	.availability-note p { margin: 0; color: #cfdddf; font-size: 0.72rem; line-height: 1.6; }
+	.availability-note[hidden] { display: none; }
+	.price-score { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+	.price-score div { display: grid; gap: 0.35rem; }
+	.price-score span { color: var(--muted); font-size: 0.62rem; }
+	.price-score strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
+	.price-score .detail-price { display: flex; align-items: baseline; gap: 0.5rem; margin: 0; }
+	.price-score .detail-price s { color: var(--muted); font-size: 1rem; text-decoration-thickness: 1px; white-space: nowrap; }
+	.price-score [data-price-line][hidden] { display: none; }
+	.price-score .score-summary { margin-left: auto; text-align: right; }
+	.score-summary strong { color: var(--signal); }
+	.score-summary small { margin-left: 0.15rem; color: var(--muted); font: 500 0.7rem 'DM Sans', sans-serif; }
+	.score-track { display: block; height: 4px; margin: 0.4rem 0 1.4rem; background: rgba(226, 242, 244, 0.14); }
+	.score-track > span { display: block; height: 100%; background: var(--signal); }
+	.enquiry-button { width: 100%; }
+	.enquiry-button.is-disabled, .enquiry-button.is-disabled:hover { border-color: var(--line); background: transparent; color: var(--muted); cursor: not-allowed; }
+	.share-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; width: 100%; margin-top: 0.75rem; padding: 0.8rem 1rem; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--paper); font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+	.share-btn:hover, .share-btn:focus-visible { border-color: rgba(131,229,220,0.5); background: rgba(131,229,220,0.08); outline: none; }
+	.share-btn.is-copied { color: var(--signal); border-color: rgba(131,229,220,0.5); }
+	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); border-top: 1px solid var(--line) }
+	.spec-section { padding-top: 2rem; }
+	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 1.7rem; }
+	.section-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
+	.section-heading h2 span { color: var(--signal); }
+	.section-heading > p { max-width: 360px; margin: 0; color: var(--muted); font-size: 0.75rem; line-height: 1.7; }
+	/* Every bike detail (size, weight, components, extras) comes from Sanity's
+	   spec list, so the section is a single bullet list. */
+	.spec-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 3rem; max-width: 1200px; margin: 0 auto; padding: 0; list-style: none; }
+	.spec-list li { display: flex; align-items: flex-start; column-gap: 0.5rem; padding: 0.8rem 0; border-top: 1px solid var(--line); font-size: 0.8rem; line-height: 1.6; }
+	.spec-list li::before { flex: none; width: 5px; height: 5px; margin-top: 0.55em; background: var(--signal); content: ''; }
+	.spec-label { color: var(--muted); }
+	.spec-value { color: var(--paper); }
+	.inspection-section { background: rgba(12, 17, 20, 0.98); }
+	.report-score { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 0.4rem; max-width: 1200px; margin: 0 auto; padding: 1rem 0; border-top: 1px solid var(--line); }
+	.report-score > strong { color: var(--signal); font-family: 'Barlow Condensed', sans-serif; font-size: 3.4rem; line-height: 1; }
+	.report-score > span { color: var(--muted); font-size: 0.7rem; }
+	.report-score .score-track { align-self: center; margin: 0 0 0 1rem; }
+	.check-list { max-width: 1200px; margin: 0 auto; padding: 0; list-style: none; }
+	.check-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-top: 1px solid var(--line); }
+	.check-name { display: flex; align-items: center; gap: 0.65rem; color: var(--paper); font-size: 0.8rem; }
+	.check-name > span { color: var(--signal); }
+	.check-points { color: var(--paper); font-weight: 700; }
+	.check-points small { color: var(--muted); font-size: 0.65rem; }
+	.report-note { max-width: 1200px; margin: 1.4rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
+	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; row-gap: 0.85rem; } .product-summary { position: static; } }
+	@media (max-width: 600px) {
+		.thumb-item { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
+		.product-layout { padding-right: 1rem; padding-left: 1rem; }
+		.spec-list { grid-template-columns: 1fr; }
+		.section-heading { align-items: start; flex-direction: column; gap: 0.8rem; }
+		.gallery-actions { top: 0.5rem; right: 0.5rem; gap: 0.25rem; }
+		.gallery-share { width: 30px; height: 30px; }
+		.lightbox { padding: 3.5rem 0.75rem 4.5rem; }
+		.lightbox-close { top: 0.75rem; right: 0.75rem; }
+		.lightbox-nav { top: auto; bottom: 0.75rem; transform: none; }
+		.lightbox-prev { left: 0.75rem; }
+		.lightbox-next { right: 0.75rem; }
+		.lightbox-count { bottom: 1.7rem; }
+	}
+</style>
