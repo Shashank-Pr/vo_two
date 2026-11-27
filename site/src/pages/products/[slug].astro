@@ -4,6 +4,7 @@ import { getBicycles, urlFor } from '../../data/bicycles';
 import { whatsappHref } from '../../data/contact';
 import { base } from 'astro:config/client';
 import backdrop from '../../assets/backdrop.avif';
+import locationIcon from '../../assets/location.png';
 
 const inlineStyles = `body { background: #090d10 url('${backdrop.src}') center 42% / cover fixed no-repeat; }`;
 
@@ -101,12 +102,15 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 				<div class="score-summary"><span>Inspection score</span><strong>{bike.score}<small>/100</small></strong></div>
 			</div>
 			<div class="score-track" aria-hidden="true"><span style={`width: ${bike.score}%`}></span></div>
+			<div class="availability-note" data-location-line>
+				<span class="availability-label"><img src={locationIcon.src} alt="" width="18" height="18" /> Available in Pune</span>
+				<p>Bike viewing and pickup by appointment in Pune. Shipping available across India.</p>
+			</div>
 			{bike.available ? (
 				<a class="button-primary enquiry-button" href={whatsappHref(purchaseMessage)} data-rent-href={whatsappHref(rentalMessage)} target="_blank" rel="noopener noreferrer">Enquire about this bike <span aria-hidden="true">↗</span></a>
 			) : (
 				<span class="button-primary enquiry-button is-disabled" aria-disabled="true">Sold out</span>
 			)}
-			<a class="inspection-link" href="#inspection">Read the full inspection <span aria-hidden="true">↓</span></a>
 		</aside>
 	</section>
 
@@ -132,6 +136,10 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 			// Rentals are quoted per booking, so the price line is hidden entirely.
 			const line = document.querySelector('[data-price-line]');
 			if (line) line.hidden = true;
+
+			// The Pune pickup note belongs to the buy listing only.
+			const locationNote = document.querySelector('[data-location-line]');
+			if (locationNote) locationNote.hidden = true;
 
 			// Keep the shared link and template in rental context too.
 			const share = document.querySelector('[data-share-url]');
@@ -336,7 +344,7 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 <style>
 	.breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 1.2rem clamp(1.25rem, 5vw, 5.5rem); color: var(--muted); font-size: 0.66rem; }
 	.breadcrumbs a { color: var(--paper); text-decoration-color: var(--signal); text-underline-offset: 3px; }
-	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 4rem; }
+	.product-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding: 1rem clamp(1.25rem, 7vw, 7rem) 1.5rem; }
 	.product-gallery { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; align-items: start; min-width: 0; }
 	/* Thumbnail strip below the main canvas: one scrollable row, so any number of
 	   photos fits without changing the canvas height. Every thumb is the same 4:3
@@ -372,11 +380,16 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.lightbox-prev { left: 1rem; }
 	.lightbox-next { right: 1rem; }
 	.lightbox-count { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); margin: 0; color: var(--muted); font-size: 0.7rem; letter-spacing: 0.08em; }
-	.product-summary { position: sticky; top: 1rem; padding: 1.2rem 0; }
+	.product-summary { position: sticky; top: 1rem; padding: 0; }
 	.product-summary .eyebrow { flex-wrap: wrap; font-size: 0.59rem; }
 	.product-summary .display-heading { margin: 1.2rem 0 0.4rem; font-size: clamp(2.4rem, 5vw, 5.3rem); }
 	.product-description { color: #cfdddf; font-size: 0.82rem; line-height: 1.8; }
-	.price-score { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+	.availability-note { margin: 0 0 0.75rem; padding: 0.55rem 0.75rem; border: 1px solid rgba(226, 242, 244, 0.08); background: rgba(131, 229, 220, 0.02); }
+	.availability-label { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.35rem; color: var(--signal); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+	.availability-label img { width: 1.3rem; height: 1.3rem; flex: none; object-fit: contain; }
+	.availability-note p { margin: 0; color: #cfdddf; font-size: 0.72rem; line-height: 1.6; }
+	.availability-note[hidden] { display: none; }
+	.price-score { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
 	.price-score div { display: grid; gap: 0.35rem; }
 	.price-score span { color: var(--muted); font-size: 0.62rem; }
 	.price-score strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; }
@@ -393,9 +406,8 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.share-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; width: 100%; margin-top: 0.75rem; padding: 0.8rem 1rem; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--paper); font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
 	.share-btn:hover, .share-btn:focus-visible { border-color: rgba(131,229,220,0.5); background: rgba(131,229,220,0.08); outline: none; }
 	.share-btn.is-copied { color: var(--signal); border-color: rgba(131,229,220,0.5); }
-	.inspection-link { display: block; margin-top: 1rem; color: var(--paper); font-size: 0.7rem; text-align: center; text-decoration-color: var(--signal); text-underline-offset: 4px; }
-	.inspection-link span { margin-left: 0.35rem; color: var(--signal); }
 	.spec-section, .inspection-section { padding: 4rem clamp(1.25rem, 10vw, 10rem); background: rgba(8, 12, 15, 0.95); border-top: 1px solid var(--line) }
+	.spec-section { padding-top: 2rem; }
 	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 1.7rem; }
 	.section-heading h2 { margin: 0.5rem 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(2rem, 4.9vw, 4rem); line-height: 0.95; text-transform: uppercase; }
 	.section-heading h2 span { color: var(--signal); }
@@ -419,7 +431,7 @@ const rentalMessage = `Hi VO2 Bikes, I'd like to rent the ${bike.name} (${bike.y
 	.check-points { color: var(--paper); font-weight: 700; }
 	.check-points small { color: var(--muted); font-size: 0.65rem; }
 	.report-note { max-width: 1200px; margin: 1.4rem auto 0; color: var(--muted); font-size: 0.68rem; line-height: 1.7; }
-	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; } .product-summary { position: static; } }
+	@media (max-width: 850px) { .product-layout { grid-template-columns: 1fr; row-gap: 0.85rem; } .product-summary { position: static; } }
 	@media (max-width: 600px) {
 		.thumb-item { flex: 0 0 auto; width: clamp(72px, 20vw, 88px); }
 		.product-layout { padding-right: 1rem; padding-left: 1rem; }

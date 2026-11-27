@@ -105,6 +105,37 @@ const formatPrice = (price: number) =>
 		maximumFractionDigits: 0,
 	}).format(price);
 
+/**
+ * Embed a Sanity image as a data URL so canvas-generated share graphics can use it.
+ * Sanity rejects cross-origin image requests (and therefore tainted canvases), so
+ * the image is fetched at build time instead of in the browser.
+ */
+export async function imageDataUrl(url: string): Promise<string> {
+	try {
+		const response = await fetch(url);
+		if (!response.ok) return '';
+		const bytes = new Uint8Array(await response.arrayBuffer());
+		let binary = '';
+		for (let index = 0; index < bytes.length; index += 0x8000) {
+			binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+		}
+		const mime = response.headers.get('content-type') || 'image/webp';
+		return `data:${mime};base64,${btoa(binary)}`;
+	} catch {
+		return '';
+	}
+}
+
+/** The compact spec set used on social share graphics. */
+export function shortSpecs(bike: Bicycle, limit = 4) {
+	const preferred = ['Frame', 'Size', 'Fork', 'Groupset', 'Brakes', 'Wheels'];
+	const specs = bike.specList ?? [];
+	const picked = preferred
+		.map((label) => specs.find((spec) => spec.label.trim().toLowerCase() === label.toLowerCase()))
+		.filter((spec): spec is SpecItemRecord => Boolean(spec));
+	return (picked.length ? picked : specs.slice(0, limit)).slice(0, limit);
+}
+
 export async function getBicycles(): Promise<Bicycle[]> {
 	const [records, standard] = await Promise.all([
 		sanityClient.fetch<SanityBicycleRecord[]>(BICYCLES_QUERY),

@@ -1,5 +1,5 @@
 ---
-import { getBicycles, urlFor, type Bicycle } from '../data/bicycles';
+import { getBicycles, imageDataUrl, shortSpecs, urlFor, type Bicycle } from '../data/bicycles';
 import { base } from 'astro:config/client';
 
 interface Props {
@@ -22,6 +22,18 @@ const featured = [...bicycles].sort(
 	(a, b) => Number(b.available) - Number(a.available) || a.name.localeCompare(b.name),
 );
 const unavailableLabel = isRent ? 'UNAVAILABLE' : 'SOLD OUT';
+
+/* Only the unlisted share workspace needs canvas-safe, same-origin image data.
+   Public listing pages keep small HTML and continue loading images from the CDN. */
+const shareImageData = new Map<string, string>();
+if (shareDetail) {
+	await Promise.all(
+		bicycles.map(async (bike) => {
+			const url = urlFor(bike.image).width(720).format('webp').quality(75).url();
+			shareImageData.set(bike.slug, await imageDataUrl(url));
+		}),
+	);
+}
 
 /** Listing cards open the public product page, or the standalone share-only view. */
 const detailHref = (bike: Bicycle) => {
@@ -103,6 +115,9 @@ const detailHref = (bike: Bicycle) => {
 					data-share-image={urlFor(bike.image).width(900).url()}
 					data-share-images={[urlFor(bike.image).width(1200).url(), ...bike.gallery.slice(0, 2).map((image) => urlFor(image).width(1200).url())].join(',')}
 					data-share-specs={bike.specList?.map((spec) => `${spec.label}: ${spec.value}`).join(' | ') ?? ''}
+					data-share-spec-json={JSON.stringify(shortSpecs(bike).map((spec) => ({ label: spec.label, value: spec.value })))}
+					data-share-checks={JSON.stringify(bike.checks.map((check) => ({ name: check.name, score: check.score, max: check.max })))}
+					data-share-image-data={shareImageData.get(bike.slug) ?? ''}
 					aria-label={`Share ${bike.name}`}
 				>
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
